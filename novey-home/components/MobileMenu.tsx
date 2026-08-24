@@ -239,14 +239,14 @@ export default function MobileMenu({ onClose }: { onClose: () => void }) {
                 Ver todo en {dept.name}
               </Link>
             </li>
-            {dept.columns.map((c) => (
-              <li key={c.title}>
+            {dept.categories.map((c) => (
+              <li key={c.name}>
                 <Link
                   href="/productos"
                   onClick={onClose}
                   className="flex min-h-11 items-center border-b border-border-light px-4 py-2.5 text-[14px] text-text-primary last:border-b-0"
                 >
-                  {c.title}
+                  {c.name}
                 </Link>
               </li>
             ))}

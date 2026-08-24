@@ -1,0 +1,636 @@
+[
+  {
+    "name": "Acabados",
+    "slug": "acabados",
+    "categories": [
+      {
+        "name": "Pintura",
+        "image": "/images/departments/acabados-pintura.jpg",
+        "items": [
+          "Pintura Interior",
+          "Pintura Exterior",
+          "Esmaltes",
+          "Barnices Y Lacas",
+          "Impermeabilizantes",
+          "Selladores"
+        ]
+      },
+      {
+        "name": "Pisos Y Revestimientos",
+        "image": "/images/departments/acabados-pisos-y-revestimientos.jpg",
+        "items": [
+          "Cerámica",
+          "Porcelanato",
+          "Pisos De Madera",
+          "Pisos Laminados",
+          "Pisos Vinílicos",
+          "Alfombras"
+        ]
+      },
+      {
+        "name": "Adhesivos Y Pegamentos",
+        "image": "/images/departments/acabados-adhesivos-y-pegamentos.jpg",
+        "items": [
+          "Pegamento Para Cerámica",
+          "Pegamento Para Madera",
+          "Silicona",
+          "Pegamento General"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Aire Libre Y Recreación",
+    "slug": "aire-libre-y-recreacion",
+    "categories": [
+      {
+        "name": "Camping",
+        "image": "/images/departments/aire-libre-y-recreacion-articulos-de-acampar.jpg",
+        "items": [
+          "Carpas",
+          "Bolsas De Dormir",
+          "Linternas",
+          "Conservadoras",
+          "Mochilas",
+          "Accesorios De Camping"
+        ]
+      },
+      {
+        "name": "Parrillas",
+        "image": "/images/departments/aire-libre-y-recreacion-barbacoas.jpg",
+        "items": [
+          "Parrillas A Carbón",
+          "Parrillas A Gas",
+          "Ahumadores",
+          "Accesorios Para Parrilla",
+          "Carbón Y Leña"
+        ]
+      },
+      {
+        "name": "Muebles De Exterior",
+        "image": "/images/departments/aire-libre-y-recreacion-muebles-de-exterior.jpg",
+        "items": [
+          "Juegos De Jardín",
+          "Mesas Exteriores",
+          "Sillas Exteriores",
+          "Reposeras",
+          "Sombrillas",
+          "Fundas Protectoras"
+        ]
+      },
+      {
+        "name": "Piscinas",
+        "image": "/images/departments/aire-libre-y-recreacion-piscinas.jpg",
+        "items": [
+          "Piscinas Inflables",
+          "Piscinas Estructurales",
+          "Químicos Y Limpieza",
+          "Bombas Y Filtros",
+          "Accesorios De Piscina",
+          "Inflables Y Flotadores",
+          "Cobertores"
+        ]
+      },
+      {
+        "name": "Jardín",
+        "items": [
+          "Plantas Y Semillas",
+          "Macetas",
+          "Tierra Y Sustratos",
+          "Riego",
+          "Herramientas De Jardín"
+        ]
+      },
+      {
+        "name": "Deportes",
+        "items": [
+          "Pelotas",
+          "Fitness",
+          "Natación",
+          "Camping Deportivo"
+        ]
+      },
+      {
+        "name": "Bicicletas",
+        "items": [
+          "Bicicletas De Adulto",
+          "Bicicletas Infantiles",
+          "Cascos",
+          "Accesorios De Ciclismo"
+        ]
+      },
+      {
+        "name": "Juegos Al Aire Libre",
+        "items": [
+          "Hamacas",
+          "Toboganes",
+          "Camas Elásticas",
+          "Juegos De Agua"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Alimentos",
+    "slug": "alimentos",
+    "categories": [
+      {
+        "name": "Bebidas",
+        "image": "/images/departments/alimentos-bebidas.jpg",
+        "items": [
+          "Agua",
+          "Café Y Té",
+          "Jugos Y Néctares",
+          "Refrescos",
+          "Bebidas Energéticas"
+        ]
+      },
+      {
+        "name": "Despensa",
+        "image": "/images/departments/alimentos-despensa.jpg",
+        "items": [
+          "Arroz Y Granos",
+          "Aceites Y Vinagres",
+          "Conservas",
+          "Pasta",
+          "Salsas Y Condimentos"
+        ]
+      },
+      {
+        "name": "Snacks Y Dulces",
+        "image": "/images/departments/alimentos-snacks-y-dulces.jpg",
+        "items": [
+          "Chocolates",
+          "Galletas",
+          "Papas Fritas",
+          "Frutos Secos"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Automóvil",
+    "slug": "automovil",
+    "categories": [
+      {
+        "name": "Accesorios Para Auto",
+        "image": "/images/departments/automovil-accesorios-para-auto.jpg",
+        "items": [
+          "Alfombras",
+          "Cargadores",
+          "Forros Para Asientos",
+          "Organizadores",
+          "Parasoles"
+        ]
+      },
+      {
+        "name": "Limpieza De Vehículos",
+        "image": "/images/departments/automovil-limpieza-de-vehiculos.jpg",
+        "items": [
+          "Aspiradoras",
+          "Ceras Y Pulimento",
+          "Esponjas Y Bayetas",
+          "Shampoo Para Auto"
+        ]
+      },
+      {
+        "name": "Herramientas Para Auto",
+        "image": "/images/departments/automovil-herramientas-para-auto.jpg",
+        "items": [
+          "Cables Para Batería",
+          "Gatos Hidráulicos",
+          "Infladores",
+          "Llaves Y Dados"
+        ]
+      },
+      {
+        "name": "Lubricantes Y Fluidos",
+        "image": "/images/departments/automovil-lubricantes-y-fluidos.jpg",
+        "items": [
+          "Aceites Para Motor",
+          "Anticongelante",
+          "Líquido De Frenos",
+          "Refrigerante"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Baño",
+    "slug": "bano",
+    "categories": [
+      {
+        "name": "Grifería",
+        "image": "/images/departments/bano-griferia.jpg",
+        "items": [
+          "Grifos Para Lavabo",
+          "Grifos Para Ducha",
+          "Regaderas",
+          "Mezcladores"
+        ]
+      },
+      {
+        "name": "Sanitarios",
+        "image": "/images/departments/bano-sanitarios.jpg",
+        "items": [
+          "Inodoros",
+          "Lavabos",
+          "Urinarios",
+          "Bidets"
+        ]
+      },
+      {
+        "name": "Accesorios Para Baño",
+        "image": "/images/departments/bano-accesorios-para-bano.jpg",
+        "items": [
+          "Espejos",
+          "Jaboneras",
+          "Porta Papel Higiénico",
+          "Toalleros",
+          "Perchas Y Ganchos"
+        ]
+      },
+      {
+        "name": "Muebles Para Baño",
+        "image": "/images/departments/bano-muebles-para-bano.jpg",
+        "items": [
+          "Gabinetes",
+          "Organizadores",
+          "Botiquines",
+          "Estanterías"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Cocina",
+    "slug": "cocina",
+    "categories": [
+      {
+        "name": "Electrodomésticos",
+        "image": "/images/departments/cocina-electrodomesticos.jpg",
+        "items": [
+          "Batidoras",
+          "Cafeteras",
+          "Licuadoras",
+          "Microondas",
+          "Tostadoras",
+          "Procesadores De Alimentos"
+        ]
+      },
+      {
+        "name": "Utensilios",
+        "image": "/images/departments/cocina-utensilios.jpg",
+        "items": [
+          "Cuchillos Y Tablas",
+          "Espátulas Y Cucharones",
+          "Tazas Y Cucharas Medidoras",
+          "Ralladores",
+          "Coladores"
+        ]
+      },
+      {
+        "name": "Vajilla Y Cristalería",
+        "image": "/images/departments/cocina-vajilla-y-cristaleria.jpg",
+        "items": [
+          "Platos",
+          "Tazas Y Vasos",
+          "Cubiertos",
+          "Copas"
+        ]
+      },
+      {
+        "name": "Almacenamiento",
+        "image": "/images/departments/cocina-almacenamiento.jpg",
+        "items": [
+          "Contenedores",
+          "Frascos",
+          "Organizadores",
+          "Cestas"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Construcción",
+    "slug": "construccion",
+    "categories": [
+      {
+        "name": "Cemento Y Concreto",
+        "image": "/images/departments/construccion-cemento-y-concreto.jpg",
+        "items": [
+          "Cemento Gris",
+          "Cemento Blanco",
+          "Concreto Premezclado",
+          "Mortero"
+        ]
+      },
+      {
+        "name": "Ladrillos Y Bloques",
+        "image": "/images/departments/construccion-ladrillos-y-bloques.jpg",
+        "items": [
+          "Ladrillos Rojos",
+          "Bloques De Concreto",
+          "Adoquines",
+          "Bloques De Vidrio"
+        ]
+      },
+      {
+        "name": "Arena Y Grava",
+        "image": "/images/departments/construccion-arena-y-grava.jpg",
+        "items": [
+          "Arena Para Construcción",
+          "Grava",
+          "Piedra Triturada"
+        ]
+      },
+      {
+        "name": "Madera",
+        "image": "/images/departments/construccion-madera.jpg",
+        "items": [
+          "Tablas",
+          "Vigas",
+          "Contrachapado",
+          "MDF"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Decoración",
+    "slug": "decoracion",
+    "categories": [
+      {
+        "name": "Cortinas Y Persianas",
+        "image": "/images/departments/decoracion-cortinas-y-persianas.jpg",
+        "items": [
+          "Cortinas De Tela",
+          "Persianas Enrollables",
+          "Persianas Verticales",
+          "Rieles Y Barras"
+        ]
+      },
+      {
+        "name": "Iluminación Decorativa",
+        "image": "/images/departments/decoracion-iluminacion-decorativa.jpg",
+        "items": [
+          "Lámparas De Techo",
+          "Lámparas De Mesa",
+          "Lámparas De Pie",
+          "Apliques De Pared"
+        ]
+      },
+      {
+        "name": "Cuadros Y Espejos",
+        "image": "/images/departments/decoracion-cuadros-y-espejos.jpg",
+        "items": [
+          "Cuadros Decorativos",
+          "Marcos",
+          "Espejos Decorativos",
+          "Vinilos Para Pared"
+        ]
+      },
+      {
+        "name": "Textiles Para El Hogar",
+        "image": "/images/departments/decoracion-textiles-para-el-hogar.jpg",
+        "items": [
+          "Cojines",
+          "Mantas",
+          "Tapetes",
+          "Fundas"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Eléctrico",
+    "slug": "electrico",
+    "categories": [
+      {
+        "name": "Cables Y Alambres",
+        "image": "/images/departments/electrico-cables-y-alambres.jpg",
+        "items": [
+          "Cable THHW",
+          "Cable THW",
+          "Alambre Por Calibre",
+          "Cable De Uso Rudo"
+        ]
+      },
+      {
+        "name": "Interruptores Y Contactos",
+        "image": "/images/departments/electrico-interruptores-y-contactos.jpg",
+        "items": [
+          "Interruptores Sencillos",
+          "Interruptores Dobles",
+          "Contactos",
+          "Placas Decorativas"
+        ]
+      },
+      {
+        "name": "Luminarias",
+        "image": "/images/departments/electrico-luminarias.jpg",
+        "items": [
+          "Focos LED",
+          "Tubos LED",
+          "Reflectores",
+          "Luminarias De Emergencia"
+        ]
+      },
+      {
+        "name": "Tableros Y Protecciones",
+        "image": "/images/departments/electrico-tableros-y-protecciones.jpg",
+        "items": [
+          "Centro De Carga",
+          "Pastillas Térmicas",
+          "Reguladores De Voltaje",
+          "Supresores De Picos"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Electrónica",
+    "slug": "electronica",
+    "categories": [
+      {
+        "name": "Audio",
+        "image": "/images/departments/electronica-audio.jpg",
+        "items": [
+          "Audífonos",
+          "Bocinas Bluetooth",
+          "Sistemas De Sonido",
+          "Micrófonos"
+        ]
+      },
+      {
+        "name": "Televisores",
+        "image": "/images/departments/electronica-televisores.jpg",
+        "items": [
+          "TV 32 Pulgadas",
+          "TV 43 Pulgadas",
+          "TV 55 Pulgadas",
+          "Soportes Para TV"
+        ]
+      },
+      {
+        "name": "Computación",
+        "image": "/images/departments/electronica-computacion.jpg",
+        "items": [
+          "Laptops",
+          "Tablets",
+          "Teclados Y Mouse",
+          "Monitores"
+        ]
+      },
+      {
+        "name": "Accesorios",
+        "image": "/images/departments/electronica-accesorios.jpg",
+        "items": [
+          "Cables USB",
+          "Cargadores",
+          "Memorias USB",
+          "Fundas Y Protectores"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Escolar Y Oficina",
+    "slug": "escolar-y-oficina",
+    "categories": [
+      {
+        "name": "Papelería",
+        "image": "/images/departments/escolar-y-oficina-papeleria.jpg",
+        "items": [
+          "Cuadernos",
+          "Hojas Blancas",
+          "Carpetas",
+          "Blocks Y Libretas"
+        ]
+      },
+      {
+        "name": "Escritura",
+        "image": "/images/departments/escolar-y-oficina-escritura.jpg",
+        "items": [
+          "Bolígrafos",
+          "Lápices",
+          "Marcadores",
+          "Plumas Fuente"
+        ]
+      },
+      {
+        "name": "Arte Y Manualidades",
+        "image": "/images/departments/escolar-y-oficina-arte-y-manualidades.jpg",
+        "items": [
+          "Pinturas Y Acuarela",
+          "Pinceles",
+          "Plastilina",
+          "Cartulinas"
+        ]
+      },
+      {
+        "name": "Organización",
+        "image": "/images/departments/escolar-y-oficina-organizacion.jpg",
+        "items": [
+          "Archiveros",
+          "Bandejas Para Escritorio",
+          "Porta Lápices",
+          "Organizadores"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Ferretería",
+    "slug": "ferreteria",
+    "categories": [
+      {
+        "name": "Herramientas De Mano",
+        "image": "/images/departments/ferreteria-herramientas-de-mano.jpg",
+        "items": [
+          "Martillos",
+          "Destornilladores",
+          "Alicates",
+          "Llaves Ajustables",
+          "Serruchos"
+        ]
+      },
+      {
+        "name": "Herramientas Eléctricas",
+        "image": "/images/departments/ferreteria-herramientas-electricas.jpg",
+        "items": [
+          "Taladros",
+          "Lijadoras",
+          "Sierras Eléctricas",
+          "Esmeriles"
+        ]
+      },
+      {
+        "name": "Tornillería Y Fijación",
+        "image": "/images/departments/ferreteria-tornilleria-y-fijacion.jpg",
+        "items": [
+          "Tornillos",
+          "Clavos",
+          "Taquetes",
+          "Tuercas Y Rondanas"
+        ]
+      },
+      {
+        "name": "Candados Y Cerraduras",
+        "image": "/images/departments/ferreteria-candados-y-cerraduras.jpg",
+        "items": [
+          "Candados",
+          "Cerraduras De Pomo",
+          "Cerrojos",
+          "Bisagras"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Hogar",
+    "slug": "hogar",
+    "categories": [
+      {
+        "name": "Muebles",
+        "image": "/images/departments/hogar-muebles.jpg",
+        "items": [
+          "Sofás",
+          "Mesas De Centro",
+          "Estanterías",
+          "Sillas De Comedor"
+        ]
+      },
+      {
+        "name": "Recámara",
+        "image": "/images/departments/hogar-recamara.jpg",
+        "items": [
+          "Camas",
+          "Colchones",
+          "Almohadas",
+          "Sábanas"
+        ]
+      },
+      {
+        "name": "Organización",
+        "image": "/images/departments/hogar-organizacion.jpg",
+        "items": [
+          "Cajas De Almacenamiento",
+          "Closets Portátiles",
+          "Ganchos Y Perchas",
+          "Repisas"
+        ]
+      },
+      {
+        "name": "Limpieza",
+        "image": "/images/departments/hogar-limpieza.jpg",
+        "items": [
+          "Trapeadores",
+          "Escobas",
+          "Aspiradoras",
+          "Detergentes"
+        ]
+      }
+    ]
+  }
+]
