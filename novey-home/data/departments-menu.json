@@ -105,7 +105,8 @@
           "Tierra y sustratos",
           "Riego",
           "Herramientas de jardín"
-        ]
+        ],
+        "image": "/images/departments/aire-libre-y-recreacion-jardin.jpg"
       },
       {
         "name": "Deportes",
@@ -115,7 +116,8 @@
           "Natación",
           "Camping deportivo",
           "Accesorios deportivos"
-        ]
+        ],
+        "image": "/images/departments/aire-libre-y-recreacion-deportes.jpg"
       },
       {
         "name": "Bicicletas",
