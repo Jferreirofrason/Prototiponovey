@@ -88,6 +88,8 @@ test('todos los departamentos tienen nombre, slug y categorías bien formadas', 
     for (const c of d.categories) {
       assert.ok(c.name, `${d.slug} tiene una categoría sin nombre`);
       assert.ok(Array.isArray(c.items), `${d.slug}/${c.name} sin lista de subcategorías`);
+      // Regla de contenido: ninguna columna se muestra rala.
+      assert.ok(c.items.length >= 5, `${d.slug}/${c.name} tiene ${c.items.length} subcategorías (mínimo 5)`);
     }
   }
 });

@@ -34,7 +34,8 @@
           "Pegamento Para Cerámica",
           "Pegamento Para Madera",
           "Silicona",
-          "Pegamento General"
+          "Pegamento General",
+          "Cintas Adhesivas"
         ]
       }
     ]
@@ -107,7 +108,8 @@
           "Pelotas",
           "Fitness",
           "Natación",
-          "Camping Deportivo"
+          "Camping Deportivo",
+          "Accesorios Deportivos"
         ]
       },
       {
@@ -116,7 +118,8 @@
           "Bicicletas De Adulto",
           "Bicicletas Infantiles",
           "Cascos",
-          "Accesorios De Ciclismo"
+          "Accesorios De Ciclismo",
+          "Luces Y Candados"
         ]
       },
       {
@@ -125,7 +128,8 @@
           "Hamacas",
           "Toboganes",
           "Camas Elásticas",
-          "Juegos De Agua"
+          "Juegos De Agua",
+          "Areneros"
         ]
       }
     ]
@@ -163,7 +167,8 @@
           "Chocolates",
           "Galletas",
           "Papas Fritas",
-          "Frutos Secos"
+          "Frutos Secos",
+          "Caramelos Y Gomitas"
         ]
       }
     ]
@@ -190,7 +195,8 @@
           "Aspiradoras",
           "Ceras Y Pulimento",
           "Esponjas Y Bayetas",
-          "Shampoo Para Auto"
+          "Shampoo Para Auto",
+          "Aromatizantes"
         ]
       },
       {
@@ -200,7 +206,8 @@
           "Cables Para Batería",
           "Gatos Hidráulicos",
           "Infladores",
-          "Llaves Y Dados"
+          "Llaves Y Dados",
+          "Medidores De Presión"
         ]
       },
       {
@@ -210,7 +217,8 @@
           "Aceites Para Motor",
           "Anticongelante",
           "Líquido De Frenos",
-          "Refrigerante"
+          "Refrigerante",
+          "Aditivos"
         ]
       }
     ]
@@ -226,7 +234,8 @@
           "Grifos Para Lavabo",
           "Grifos Para Ducha",
           "Regaderas",
-          "Mezcladores"
+          "Mezcladores",
+          "Repuestos De Grifería"
         ]
       },
       {
@@ -236,7 +245,8 @@
           "Inodoros",
           "Lavabos",
           "Urinarios",
-          "Bidets"
+          "Bidets",
+          "Asientos Para Inodoro"
         ]
       },
       {
@@ -257,7 +267,8 @@
           "Gabinetes",
           "Organizadores",
           "Botiquines",
-          "Estanterías"
+          "Estanterías",
+          "Espejos Para Baño"
         ]
       }
     ]
@@ -296,7 +307,8 @@
           "Platos",
           "Tazas Y Vasos",
           "Cubiertos",
-          "Copas"
+          "Copas",
+          "Jarras Y Botellas"
         ]
       },
       {
@@ -306,7 +318,8 @@
           "Contenedores",
           "Frascos",
           "Organizadores",
-          "Cestas"
+          "Cestas",
+          "Portacomidas"
         ]
       }
     ]
@@ -322,7 +335,8 @@
           "Cemento Gris",
           "Cemento Blanco",
           "Concreto Premezclado",
-          "Mortero"
+          "Mortero",
+          "Aditivos Para Concreto"
         ]
       },
       {
@@ -332,7 +346,8 @@
           "Ladrillos Rojos",
           "Bloques De Concreto",
           "Adoquines",
-          "Bloques De Vidrio"
+          "Bloques De Vidrio",
+          "Tejas"
         ]
       },
       {
@@ -341,7 +356,9 @@
         "items": [
           "Arena Para Construcción",
           "Grava",
-          "Piedra Triturada"
+          "Piedra Triturada",
+          "Piedra Decorativa",
+          "Tierra Para Relleno"
         ]
       },
       {
@@ -351,7 +368,8 @@
           "Tablas",
           "Vigas",
           "Contrachapado",
-          "MDF"
+          "MDF",
+          "Molduras De Madera"
         ]
       }
     ]
@@ -367,7 +385,8 @@
           "Cortinas De Tela",
           "Persianas Enrollables",
           "Persianas Verticales",
-          "Rieles Y Barras"
+          "Rieles Y Barras",
+          "Cortinas Blackout"
         ]
       },
       {
@@ -377,7 +396,8 @@
           "Lámparas De Techo",
           "Lámparas De Mesa",
           "Lámparas De Pie",
-          "Apliques De Pared"
+          "Apliques De Pared",
+          "Guirnaldas De Luces"
         ]
       },
       {
@@ -387,7 +407,8 @@
           "Cuadros Decorativos",
           "Marcos",
           "Espejos Decorativos",
-          "Vinilos Para Pared"
+          "Vinilos Para Pared",
+          "Relojes De Pared"
         ]
       },
       {
@@ -397,7 +418,8 @@
           "Cojines",
           "Mantas",
           "Tapetes",
-          "Fundas"
+          "Fundas",
+          "Caminos De Mesa"
         ]
       }
     ]
@@ -413,7 +435,8 @@
           "Cable THHW",
           "Cable THW",
           "Alambre Por Calibre",
-          "Cable De Uso Rudo"
+          "Cable De Uso Rudo",
+          "Extensiones Eléctricas"
         ]
       },
       {
@@ -423,7 +446,8 @@
           "Interruptores Sencillos",
           "Interruptores Dobles",
           "Contactos",
-          "Placas Decorativas"
+          "Placas Decorativas",
+          "Atenuadores"
         ]
       },
       {
@@ -433,7 +457,8 @@
           "Focos LED",
           "Tubos LED",
           "Reflectores",
-          "Luminarias De Emergencia"
+          "Luminarias De Emergencia",
+          "Lámparas Solares"
         ]
       },
       {
@@ -443,7 +468,8 @@
           "Centro De Carga",
           "Pastillas Térmicas",
           "Reguladores De Voltaje",
-          "Supresores De Picos"
+          "Supresores De Picos",
+          "Temporizadores"
         ]
       }
     ]
@@ -459,7 +485,8 @@
           "Audífonos",
           "Bocinas Bluetooth",
           "Sistemas De Sonido",
-          "Micrófonos"
+          "Micrófonos",
+          "Barras De Sonido"
         ]
       },
       {
@@ -469,7 +496,8 @@
           "TV 32 Pulgadas",
           "TV 43 Pulgadas",
           "TV 55 Pulgadas",
-          "Soportes Para TV"
+          "Soportes Para TV",
+          "Controles Remotos"
         ]
       },
       {
@@ -479,7 +507,8 @@
           "Laptops",
           "Tablets",
           "Teclados Y Mouse",
-          "Monitores"
+          "Monitores",
+          "Impresoras"
         ]
       },
       {
@@ -489,7 +518,8 @@
           "Cables USB",
           "Cargadores",
           "Memorias USB",
-          "Fundas Y Protectores"
+          "Fundas Y Protectores",
+          "Baterías Portátiles"
         ]
       }
     ]
@@ -505,7 +535,8 @@
           "Cuadernos",
           "Hojas Blancas",
           "Carpetas",
-          "Blocks Y Libretas"
+          "Blocks Y Libretas",
+          "Sobres Y Etiquetas"
         ]
       },
       {
@@ -515,7 +546,8 @@
           "Bolígrafos",
           "Lápices",
           "Marcadores",
-          "Plumas Fuente"
+          "Plumas Fuente",
+          "Correctores"
         ]
       },
       {
@@ -525,7 +557,8 @@
           "Pinturas Y Acuarela",
           "Pinceles",
           "Plastilina",
-          "Cartulinas"
+          "Cartulinas",
+          "Pegamento Escolar"
         ]
       },
       {
@@ -535,7 +568,8 @@
           "Archiveros",
           "Bandejas Para Escritorio",
           "Porta Lápices",
-          "Organizadores"
+          "Organizadores",
+          "Agendas Y Planificadores"
         ]
       }
     ]
@@ -562,7 +596,8 @@
           "Taladros",
           "Lijadoras",
           "Sierras Eléctricas",
-          "Esmeriles"
+          "Esmeriles",
+          "Atornilladores"
         ]
       },
       {
@@ -572,7 +607,8 @@
           "Tornillos",
           "Clavos",
           "Taquetes",
-          "Tuercas Y Rondanas"
+          "Tuercas Y Rondanas",
+          "Anclajes"
         ]
       },
       {
@@ -582,7 +618,8 @@
           "Candados",
           "Cerraduras De Pomo",
           "Cerrojos",
-          "Bisagras"
+          "Bisagras",
+          "Cadenas De Seguridad"
         ]
       }
     ]
@@ -598,7 +635,8 @@
           "Sofás",
           "Mesas De Centro",
           "Estanterías",
-          "Sillas De Comedor"
+          "Sillas De Comedor",
+          "Escritorios"
         ]
       },
       {
@@ -608,7 +646,8 @@
           "Camas",
           "Colchones",
           "Almohadas",
-          "Sábanas"
+          "Sábanas",
+          "Cobijas Y Edredones"
         ]
       },
       {
@@ -618,7 +657,8 @@
           "Cajas De Almacenamiento",
           "Closets Portátiles",
           "Ganchos Y Perchas",
-          "Repisas"
+          "Repisas",
+          "Zapateras"
         ]
       },
       {
@@ -628,7 +668,8 @@
           "Trapeadores",
           "Escobas",
           "Aspiradoras",
-          "Detergentes"
+          "Detergentes",
+          "Botes De Basura"
         ]
       }
     ]
