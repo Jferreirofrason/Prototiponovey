@@ -494,7 +494,7 @@ export default function DepartmentsMenu() {
                     className="flex min-h-11 items-center gap-2 text-[15px] font-medium text-novey-blue"
                   >
                     <ArrowLeftIcon className="h-4 w-4" />
-                    Volver
+                    Volver a Departamentos
                   </button>
                   <ViewToggle vista={vista} onChange={cambiarVista} />
                 </div>
@@ -535,7 +535,7 @@ export default function DepartmentsMenu() {
                   className="flex min-h-11 items-center gap-2 text-[15px] font-medium text-novey-blue"
                 >
                   <ArrowLeftIcon className="h-4 w-4" />
-                  Volver
+                  Volver a {mobileActiveDept.name}
                 </button>
                 <h3 className="mt-1 text-[20px] font-bold leading-tight text-text-ink">{mobileActiveCat.name}</h3>
                 <ul className="mt-2 pb-4">

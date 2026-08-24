@@ -243,10 +243,10 @@ export default function PLP() {
       <div className="bc">
         <a href="#">Inicio</a><span className="sep">/</span>
         <a href="#">Electrodomésticos</a><span className="sep">/</span>
-        <b>Lavadoras y Secadoras</b>
+        <b>Lavadoras y secadoras</b>
       </div>
       <div className="page-title">
-        <h1>Lavadoras y Secadoras</h1>
+        <h1>Lavadoras y secadoras</h1>
         <div className="cnt">Mostrando {filtrados.length} de {products.length} productos</div>
       </div>
 
@@ -282,7 +282,7 @@ export default function PLP() {
 
         <div className="results">
           <div className="results-bar">
-            <div className="l"><b aria-live="polite">Mostrando {filtrados.length} de {products.length} productos</b><div className="tiny">Lavadoras y Secadoras</div></div>
+            <div className="l"><b aria-live="polite">Mostrando {filtrados.length} de {products.length} productos</b><div className="tiny">Lavadoras y secadoras</div></div>
             <label className="sortby">Ordenar por
               <select value={orden} onChange={(e) => setOrden(e.target.value)}>
                 {ORDENES.map((o) => <option key={o}>{o}</option>)}

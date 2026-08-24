@@ -77,3 +77,51 @@ export const necesitaVerTodasEn = (totalOpciones) => totalOpciones > OPCIONES_TO
 
 /** Texto del enlace a la página completa de la categoría. */
 export const etiquetaVerTodasEn = (nombreCategoria) => `Ver todas en ${nombreCategoria}`;
+
+/* ---------- nombres visibles (para el alta/edición futura) ---------- */
+
+/**
+ * Nombres propios y siglas que conservan su forma al sugerir un nombre
+ * visible. Todo lo demás va en minúscula después de la primera palabra.
+ */
+export const NOMBRES_PROPIOS = ['LED', 'MDF', 'USB', 'TV', 'THHW', 'THW', 'Bluetooth', 'Novey'];
+
+/**
+ * ¿El nombre parece escrito a los gritos? (todo en mayúsculas). Sirve para
+ * ADVERTIR y sugerir — nunca para corregir en silencio: la persona decide.
+ */
+export const pareceGritado = (texto) => {
+  const letras = texto.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/g, '');
+  return letras.length >= 4 && letras === letras.toUpperCase();
+};
+
+/**
+ * Sugerencia de nombre visible en capitalización natural: mayúscula inicial,
+ * el resto en minúscula, con nombres propios y siglas respetados.
+ * "MUEBLES DE EXTERIOR" → "Muebles de exterior" · "focos led" → "Focos LED".
+ */
+export const sugerenciaNombre = (texto) =>
+  texto
+    .trim()
+    .replace(/\s+/g, ' ')
+    .split(' ')
+    .map((palabra, i) => {
+      const propio = NOMBRES_PROPIOS.find((p) => p.toUpperCase() === palabra.toUpperCase());
+      if (propio) return propio;
+      const baja = palabra.toLowerCase();
+      return i === 0 ? baja.charAt(0).toUpperCase() + baja.slice(1) : baja;
+    })
+    .join(' ');
+
+/**
+ * Clave para detectar duplicados: "Aire Libre y Recreación", "aire libre y
+ * recreación" y "Aire libre y recreacion" son EL MISMO departamento. Ignora
+ * mayúsculas, tildes y espacios repetidos; los slugs no se tocan.
+ */
+export const claveDeDuplicado = (texto) =>
+  texto
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '');

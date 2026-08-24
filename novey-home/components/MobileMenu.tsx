@@ -207,7 +207,7 @@ export default function MobileMenu({ onClose }: { onClose: () => void }) {
         <nav aria-label="Departamentos">
           <LevelHeader title="Departamentos" onBack={() => setLevel({ view: 'main' })} onClose={onClose} />
           <p className="px-4 pb-1 pt-3 text-[12px] leading-4 text-text-tertiary">
-            {DEPARTMENTS.length} departamentos disponibles — deslizá para ver más
+            {DEPARTMENTS.length} departamentos disponibles — desliza para ver más
           </p>
           <ul className="flex flex-col pb-2">
             {DEPARTMENTS.map((d) => (

@@ -140,3 +140,26 @@ test('todos los departamentos tienen nombre, slug y categorías bien formadas', 
     }
   }
 });
+
+/* ---------- nombres visibles: sugerencia y duplicados ---------- */
+
+test('sugerenciaNombre pasa a capitalización natural sin romper siglas ni tildes', async () => {
+  const { sugerenciaNombre, pareceGritado, claveDeDuplicado } = await import('../lib/menu-reglas.mjs');
+  assert.equal(sugerenciaNombre('MUEBLES DE EXTERIOR'), 'Muebles de exterior');
+  assert.equal(sugerenciaNombre('Parrillas A Carbón'), 'Parrillas a carbón');
+  assert.equal(sugerenciaNombre('QUÍMICOS   Y LIMPIEZA'), 'Químicos y limpieza');
+  assert.equal(sugerenciaNombre('focos led'), 'Focos LED');
+  assert.equal(sugerenciaNombre('cable thhw'), 'Cable THHW');
+  assert.equal(sugerenciaNombre('bocinas bluetooth'), 'Bocinas Bluetooth');
+
+  // Se advierte, no se corrige en silencio
+  assert.equal(pareceGritado('MUEBLES DE EXTERIOR'), true);
+  assert.equal(pareceGritado('Muebles de exterior'), false);
+  assert.equal(pareceGritado('TV'), false, 'las siglas cortas no son gritos');
+
+  // Equivalentes que NO deben crear departamentos distintos
+  const a = claveDeDuplicado('Aire Libre y Recreación');
+  assert.equal(claveDeDuplicado('aire libre y recreación'), a);
+  assert.equal(claveDeDuplicado('Aire  libre y recreacion'), a);
+  assert.notEqual(claveDeDuplicado('Aire libre'), a);
+});

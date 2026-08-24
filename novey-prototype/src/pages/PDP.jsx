@@ -263,7 +263,7 @@ export default function PDP() {
         ) : (
           <>
             <a href="#">Inicio</a><span className="sep">/</span><a href="#">Electrodomésticos</a><span className="sep">/</span>
-            <a href="#">Lavadoras y Secadoras</a><span className="sep">/</span><b>Lavadoras carga frontal</b>
+            <a href="#">Lavadoras y secadoras</a><span className="sep">/</span><b>Lavadoras carga frontal</b>
           </>
         )}
         <Link to="/" className="back"><Ic.chevL s={16} /> Volver a resultados</Link>
