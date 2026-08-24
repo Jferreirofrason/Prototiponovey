@@ -165,24 +165,26 @@ function FeaturedRow({ categories }: { categories: Category[] }) {
  * opciones, la sexta línea "Ver todo (N)" que abre su página completa.
  * Compacto a propósito: separador corto bajo el título, sin líneas que
  * atraviesen la columna ni relleno para igualar alturas.
+ * Color: título y opciones en negro (nada que parezca deshabilitado o
+ * enlace); el azul Novey queda como acento en la línea y en "Ver todo (N)".
  */
 function CategoryBlock({ cat }: { cat: Category }) {
   const total = cat.items.length;
   return (
     <section aria-label={cat.name}>
       <h4>
-        <a href={ROUTES.categoria} className="text-[14px] font-semibold text-novey-navy hover:text-novey-blue hover:underline">
+        <a href={ROUTES.categoria} className="text-[14px] font-semibold text-text-ink hover:text-novey-blue hover:underline">
           {cat.name}
         </a>
       </h4>
-      <span aria-hidden="true" className="mb-1.5 mt-1 block h-px w-7 bg-border-medium" />
+      <span aria-hidden="true" className="mb-1.5 mt-1 block h-0.5 w-7 bg-novey-blue" />
       {total > 0 ? (
         <ul>
           {cat.items.slice(0, opcionesEnBloque(total)).map((item) => (
             <li key={item}>
               <a
                 href={ROUTES.categoria}
-                className="flex min-h-[26px] items-center text-[13px] leading-tight text-novey-navy transition-colors duration-150 hover:text-novey-blue hover:underline"
+                className="flex min-h-[26px] items-center text-[13px] leading-tight text-text-ink transition-colors duration-150 hover:text-novey-blue hover:underline"
               >
                 {item}
               </a>
