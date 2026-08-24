@@ -10,100 +10,83 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import {
-  MAX_CATEGORIAS_INICIALES,
-  OPCIONES_INICIALES_VISUAL,
-  OPCIONES_TOPE_MENU,
-  categoriasVisibles,
-  etiquetaOpcionesMas,
-  etiquetaVerTodasEn,
+  OPCIONES_VISIBLES,
+  SUBCATS_MAX_MENU,
+  SUBCATS_MIN,
   etiquetaVerTodo,
-  necesitaOpcionesMas,
-  necesitaVerTodasEn,
+  faltanSubcategorias,
   necesitaVerTodo,
-  opcionesVisibles,
+  opcionesEnBloque,
+  subcatsEnMenu,
 } from '../lib/menu-reglas.mjs';
 
 const DEPARTMENTS = JSON.parse(
   readFileSync(new URL('../data/departments-menu.json', import.meta.url), 'utf8'),
 );
 
-/* ---------- categorías principales (vista Visual) ---------- */
+/* ---------- subcategorías: 4 a 8, todas a la vista ---------- */
 
-test('con 6 categorías o menos se muestran todas y no hay "Ver todo"', () => {
-  for (const total of [1, 4, 6]) {
+test('el menú muestra todas las subcategorías con tope de 8', () => {
+  for (const [total, esperado] of [[3, 3], [4, 4], [8, 8], [11, SUBCATS_MAX_MENU]]) {
+    assert.equal(subcatsEnMenu(total), esperado);
+  }
+});
+
+test('menos de 4 subcategorías no rompe el menú pero queda marcado como incompleto', () => {
+  assert.equal(faltanSubcategorias(3), true);
+  assert.equal(faltanSubcategorias(4), false);
+  assert.equal(SUBCATS_MIN, 4);
+});
+
+/* ---------- opciones por bloque: 5 visibles + "Ver todo (ocultas)" ---------- */
+
+test('con 5 opciones o menos se muestran todas y NO hay sexta línea', () => {
+  for (const total of [3, 5]) {
+    assert.equal(opcionesEnBloque(total), total);
     assert.equal(necesitaVerTodo(total), false);
-    assert.equal(categoriasVisibles(total, false), total);
   }
 });
 
-test('con más de 6 se muestran 6 y "Ver todo (N)" usa el total de categorías', () => {
-  assert.equal(necesitaVerTodo(8), true);
-  assert.equal(categoriasVisibles(8, false), MAX_CATEGORIAS_INICIALES);
-  assert.equal(etiquetaVerTodo(8, false), 'Ver todo (8)');
-  assert.equal(etiquetaVerTodo(12, false), 'Ver todo (12)');
-});
-
-test('expandido muestra todas y el enlace pasa a "Ver menos"', () => {
-  assert.equal(categoriasVisibles(8, true), 8);
-  assert.equal(etiquetaVerTodo(8, true), 'Ver menos');
-});
-
-/* ---------- opciones por categoría: 4 iniciales, tope de 8 en el menú ---------- */
-
-test('vista Visual: con 4 opciones o menos se muestran todas, sin expansor', () => {
-  for (const total of [1, 3, 4]) {
-    assert.equal(necesitaOpcionesMas(total, 'visual'), false);
-    assert.equal(opcionesVisibles(total, false, 'visual'), total);
-  }
-});
-
-test('vista Visual: entre 5 y 8 arranca en 4 y el contador dice cuántas agrega', () => {
-  assert.equal(opcionesVisibles(6, false, 'visual'), OPCIONES_INICIALES_VISUAL);
-  assert.equal(etiquetaOpcionesMas(5, false), 'Ver 1 opción más');
-  assert.equal(etiquetaOpcionesMas(6, false), 'Ver 2 opciones más');
-  assert.equal(etiquetaOpcionesMas(8, false), 'Ver 4 opciones más');
-  assert.equal(opcionesVisibles(6, true, 'visual'), 6);
-  assert.equal(etiquetaOpcionesMas(6, true), 'Ver menos');
-});
-
-test('con más de 8 el menú topea en 8 y el resto va a la página completa', () => {
-  // Piscinas: 12 opciones → arranca en 4, "Ver 4 opciones más" (las que
-  // agrega hasta el tope, nunca 8), expandida muestra 8 y ofrece la página.
-  assert.equal(opcionesVisibles(12, false, 'visual'), OPCIONES_INICIALES_VISUAL);
-  assert.equal(etiquetaOpcionesMas(12, false), 'Ver 4 opciones más');
-  assert.equal(opcionesVisibles(12, true, 'visual'), OPCIONES_TOPE_MENU);
-  assert.equal(necesitaVerTodasEn(12), true);
-  assert.equal(necesitaVerTodasEn(8), false);
-  assert.equal(etiquetaVerTodasEn('Piscinas'), 'Ver todas en Piscinas');
-});
-
-test('vista Lista: hasta 8 de entrada, sin expansor, con enlace si hay más', () => {
-  assert.equal(opcionesVisibles(7, false, 'lista'), 7);
-  assert.equal(opcionesVisibles(12, false, 'lista'), OPCIONES_TOPE_MENU);
-  assert.equal(necesitaOpcionesMas(12, 'lista'), false);
+test('la sexta línea dice cuántas opciones quedaron ocultas, no el total', () => {
+  assert.equal(necesitaVerTodo(6), true);
+  assert.equal(etiquetaVerTodo(6), 'Ver todo (1)');
+  assert.equal(etiquetaVerTodo(8), 'Ver todo (3)');
+  assert.equal(etiquetaVerTodo(12), 'Ver todo (7)');
+  assert.equal(opcionesEnBloque(12), OPCIONES_VISIBLES);
 });
 
 /* ---------- invariantes de los datos ---------- */
 
-test('el ejemplo del brief existe: Aire libre con 8 categorías, 6 visibles en Visual', () => {
+test('el ejemplo del brief existe: Aire libre con 8 subcategorías en dos filas de 4', () => {
   const aire = DEPARTMENTS.find((d) => d.slug === 'aire-libre-y-recreacion');
   assert.ok(aire, 'falta el departamento aire-libre-y-recreacion');
   assert.equal(aire.categories.length, 8);
+  assert.equal(subcatsEnMenu(aire.categories.length), 8);
   const nombres = aire.categories.map((c) => c.name);
   for (const esperado of ['Camping', 'Parrillas', 'Muebles de exterior', 'Piscinas', 'Jardín', 'Deportes', 'Bicicletas', 'Juegos al aire libre']) {
-    assert.ok(nombres.includes(esperado), `falta la categoría ${esperado}`);
+    assert.ok(nombres.includes(esperado), `falta la subcategoría ${esperado}`);
   }
-  assert.equal(categoriasVisibles(aire.categories.length, false), 6);
-  assert.equal(etiquetaVerTodo(aire.categories.length, false), 'Ver todo (8)');
-  // Piscinas es el caso testigo del brief: 12 opciones
-  const piscinas = aire.categories.find((c) => c.name === 'Piscinas');
-  assert.equal(piscinas.items.length, 12);
-  assert.equal(etiquetaOpcionesMas(piscinas.items.length, false), 'Ver 4 opciones más');
-  assert.equal(necesitaVerTodasEn(piscinas.items.length), true);
-  // Camping con 6: arranca en 4 → "Ver 2 opciones más"
+  // Camping (6 opciones): 5 a la vista y "Ver todo (1)"
   const camping = aire.categories.find((c) => c.name === 'Camping');
   assert.equal(camping.items.length, 6);
-  assert.equal(etiquetaOpcionesMas(camping.items.length, false), 'Ver 2 opciones más');
+  assert.equal(etiquetaVerTodo(camping.items.length), 'Ver todo (1)');
+  // Piscinas (12): 5 a la vista y "Ver todo (7)" hacia su página completa
+  const piscinas = aire.categories.find((c) => c.name === 'Piscinas');
+  assert.equal(piscinas.items.length, 12);
+  assert.equal(etiquetaVerTodo(piscinas.items.length), 'Ver todo (7)');
+  // Parrillas (5): sin sexta línea
+  const parrillas = aire.categories.find((c) => c.name === 'Parrillas');
+  assert.equal(parrillas.items.length, 5);
+  assert.equal(necesitaVerTodo(parrillas.items.length), false);
+});
+
+test('los departamentos con menos de 4 subcategorías quedan identificados para el Backoffice', () => {
+  const incompletos = DEPARTMENTS.filter((d) => faltanSubcategorias(d.categories.length)).map((d) => d.slug);
+  // Son datos reales del Figma: se muestran igual, sin inventar relleno.
+  for (const d of DEPARTMENTS) {
+    assert.equal(faltanSubcategorias(d.categories.length), d.categories.length < 4, d.slug);
+  }
+  assert.ok(incompletos.every((slug) => DEPARTMENTS.find((d) => d.slug === slug).categories.length >= 1));
 });
 
 test('capitalización natural: mayúscula inicial, sin Title Case (salvo siglas)', () => {

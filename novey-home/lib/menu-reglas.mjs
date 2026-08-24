@@ -5,78 +5,50 @@
 // ven 4?"), así que conviene poder probarlas solas, sin montar React
 // (pruebas/menu-reglas.test.mjs).
 
-/** Cuántas categorías principales muestra la vista Visual antes de "Ver todo (N)". */
-export const MAX_CATEGORIAS_INICIALES = 6;
-
-/** Cuántas opciones muestra una categoría al inicio en la vista Visual. */
-export const OPCIONES_INICIALES_VISUAL = 4;
-
-/**
- * Tope de opciones dentro del megamenú, en cualquier vista y estado. Con más
- * que esto, el resto vive en la página completa de la categoría ("Ver todas
- * en [categoría]"): el menú no es el lugar para listas interminables.
+/*
+ * Jerarquía: departamento → subcategorías (bloques) → opciones.
+ * La regla de cantidad 4–8 es de las SUBCATEGORÍAS; las opciones de cada
+ * bloque topean en 5 visibles + "Ver todo (N)" hacia la página completa.
+ * Las dos vistas (Visual y Lista) comparten datos y conteos.
  */
-export const OPCIONES_TOPE_MENU = 8;
 
-/** Cuántas categorías destacadas (miniaturas con foto) admite la primera vista. */
+/** Cuántas subcategorías entran por fila en escritorio. */
+export const SUBCATS_POR_FILA = 4;
+
+/** Mínimo esperado de subcategorías por departamento (regla de contenido). */
+export const SUBCATS_MIN = 4;
+
+/** Máximo de subcategorías que muestra el menú (dos filas de 4). */
+export const SUBCATS_MAX_MENU = 8;
+
+/** Cuántas subcategorías destacadas (burbujas con foto) admite la vista Visual. */
 export const MAX_DESTACADAS = 6;
 
-/* ---------- categorías principales (vista Visual) ---------- */
+/** Cuántas opciones muestra un bloque; la sexta línea es solo para "Ver todo (N)". */
+export const OPCIONES_VISIBLES = 5;
+
+/** Cuántas subcategorías se pintan: todas, con tope de 8 (nunca hay expansor). */
+export const subcatsEnMenu = (total) => Math.min(total, SUBCATS_MAX_MENU);
 
 /**
- * ¿Este departamento necesita el enlace "Ver todo (N)"? Solo aplica a la
- * vista Visual: la Lista muestra todas las categorías desde el comienzo.
+ * ¿El departamento quedó incompleto? Con menos de 4 subcategorías se muestran
+ * las que haya (sin inventar); esto existe para que el Backoffice avise.
  */
-export const necesitaVerTodo = (totalCategorias) => totalCategorias > MAX_CATEGORIAS_INICIALES;
+export const faltanSubcategorias = (total) => total < SUBCATS_MIN;
 
-/** Cuántas categorías se ven en la vista Visual según expandido/contraído. */
-export const categoriasVisibles = (totalCategorias, expandido) =>
-  expandido || !necesitaVerTodo(totalCategorias)
-    ? totalCategorias
-    : MAX_CATEGORIAS_INICIALES;
+/** ¿El bloque necesita la sexta línea? Solo si de verdad esconde opciones. */
+export const necesitaVerTodo = (totalOpciones) => totalOpciones > OPCIONES_VISIBLES;
+
+/** Cuántas opciones se pintan en el bloque. */
+export const opcionesEnBloque = (totalOpciones) => Math.min(totalOpciones, OPCIONES_VISIBLES);
 
 /**
- * Texto del alternador del departamento. El contador es el TOTAL de
- * categorías principales (las opciones no suman).
+ * Texto de la sexta línea. N es cuántas opciones QUEDARON OCULTAS (nunca el
+ * total): con 12 opciones y 5 a la vista, "Ver todo (7)". Abre la página
+ * completa de la subcategoría; el menú no despliega listas interminables.
  */
-export const etiquetaVerTodo = (totalCategorias, expandido) =>
-  expandido ? 'Ver menos' : `Ver todo (${totalCategorias})`;
-
-/* ---------- opciones por categoría ---------- */
-
-/**
- * Cuántas opciones se ven en una categoría.
- *  - Visual contraída: hasta 4.  - Visual expandida: hasta 8.
- *  - Lista: hasta 8 desde el comienzo (es la vista compacta, sin expansor).
- * Nunca más de 8 dentro del menú.
- */
-export const opcionesVisibles = (totalOpciones, expandido, vista) => {
-  const inicial = vista === 'visual' ? OPCIONES_INICIALES_VISUAL : OPCIONES_TOPE_MENU;
-  return Math.min(totalOpciones, expandido ? OPCIONES_TOPE_MENU : inicial);
-};
-
-/** ¿La categoría necesita expansor? Solo en Visual, cuando esconde opciones. */
-export const necesitaOpcionesMas = (totalOpciones, vista) =>
-  vista === 'visual' && totalOpciones > OPCIONES_INICIALES_VISUAL;
-
-/**
- * Texto del expansor. El contador dice cuántas opciones SE VAN A AGREGAR
- * (nunca el total): con 12 opciones se agregan 4 (de 4 a 8), no 8.
- */
-export const etiquetaOpcionesMas = (totalOpciones, expandido) => {
-  if (expandido) return 'Ver menos';
-  const agrega = Math.min(totalOpciones, OPCIONES_TOPE_MENU) - OPCIONES_INICIALES_VISUAL;
-  return `Ver ${agrega} ${agrega === 1 ? 'opción más' : 'opciones más'}`;
-};
-
-/**
- * ¿Hace falta el enlace a la página completa? Cuando la categoría supera el
- * tope del menú: en Visual aparece recién al expandir, en Lista siempre.
- */
-export const necesitaVerTodasEn = (totalOpciones) => totalOpciones > OPCIONES_TOPE_MENU;
-
-/** Texto del enlace a la página completa de la categoría. */
-export const etiquetaVerTodasEn = (nombreCategoria) => `Ver todas en ${nombreCategoria}`;
+export const etiquetaVerTodo = (totalOpciones) =>
+  `Ver todo (${totalOpciones - OPCIONES_VISIBLES})`;
 
 /* ---------- nombres visibles (para el alta/edición futura) ---------- */
 
