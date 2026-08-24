@@ -4,12 +4,12 @@ import { useEffect, useRef, useState } from 'react';
 import { DEPARTMENTS, type Category } from '../data/departments-menu';
 import {
   MAX_DESTACADAS,
-  MAX_OPCIONES_LISTA,
-  MAX_OPCIONES_VISUAL,
   categoriasVisibles,
   etiquetaOpcionesMas,
+  etiquetaVerTodasEn,
   etiquetaVerTodo,
   necesitaOpcionesMas,
+  necesitaVerTodasEn,
   necesitaVerTodo,
   opcionesVisibles,
 } from '../lib/menu-reglas.mjs';
@@ -19,13 +19,15 @@ import { ROUTES } from '../lib/routes';
 //
 // Dos maneras de navegar, elegibles desde el encabezado (que queda fijo):
 //   Visual — reconocer una categoría por su foto: destacadas arriba, grupos
-//            con hasta 5 opciones, "Ver todo (N)" si hay más de 6 categorías.
+//            que arrancan con 4 opciones, "Ver todo (N)" si hay más de 6
+//            categorías.
 //   Lista  — encontrar una palabra conocida leyendo: sin fotos, TODAS las
 //            categorías desde el comienzo, hasta 8 opciones por categoría.
 //
-// Los contadores dicen cosas distintas a propósito: "Ver todo (8)" es el
-// total de categorías del departamento; "Ver 2 opciones más" son solo las
-// opciones ocultas de esa categoría.
+// Tres acciones que dicen cosas distintas a propósito: "Ver todo (8)" es el
+// total de categorías del departamento; "Ver 4 opciones más" es cuántas se
+// agregan al expandir una categoría (tope de 8 dentro del menú); "Ver todas
+// en Piscinas" abre la página completa cuando la categoría supera el tope.
 //
 // El panel ocupa el mismo contenedor de 1276px que el resto de la página
 // (su borde derecho termina donde termina "Copiar cupón"); solo el contenido
@@ -165,21 +167,26 @@ function FeaturedRow({ categories }: { categories: Category[] }) {
 }
 
 /**
- * Una categoría con sus opciones. En Visual muestra hasta 5, en Lista hasta 8;
- * si hay más, "Ver N opciones más" (N = solo las ocultas).
+ * Una categoría con sus opciones. Visual arranca con 4 y expande hasta 8;
+ * Lista muestra hasta 8 de entrada. Con más de 8, "Ver todas en [categoría]"
+ * lleva a la página completa: el menú nunca lista más de 8.
  */
 function CategoryBlock({
   cat,
-  max,
+  vista,
   expanded,
   onToggle,
 }: {
   cat: Category;
-  max: number;
+  vista: Vista;
   expanded: boolean;
   onToggle: () => void;
 }) {
-  const visibles = opcionesVisibles(cat.items.length, expanded, max);
+  const total = cat.items.length;
+  const visibles = opcionesVisibles(total, expanded, vista);
+  // El enlace a la página completa aparece cuando el menú no alcanza: en
+  // Lista siempre que supere el tope, en Visual recién al expandir.
+  const verTodasEn = necesitaVerTodasEn(total) && (vista === 'lista' || expanded);
   return (
     <section aria-label={cat.name}>
       <h4 className="border-b border-border-light pb-2">
@@ -187,7 +194,7 @@ function CategoryBlock({
           {cat.name}
         </a>
       </h4>
-      {cat.items.length > 0 ? (
+      {total > 0 ? (
         <ul className="mt-2.5 space-y-0.5">
           {cat.items.slice(0, visibles).map((item) => (
             <li key={item}>
@@ -203,14 +210,22 @@ function CategoryBlock({
       ) : (
         <p className="mt-2.5 text-[13px] text-text-tertiary">Muy pronto vas a encontrar opciones acá.</p>
       )}
-      {necesitaOpcionesMas(cat.items.length, max) && (
+      {verTodasEn && (
+        <a
+          href={ROUTES.categoria}
+          className="mt-1 flex min-h-8 items-center text-[13px] font-medium text-novey-blue hover:underline"
+        >
+          {etiquetaVerTodasEn(cat.name)}
+        </a>
+      )}
+      {necesitaOpcionesMas(total, vista) && (
         <button
           type="button"
           onClick={onToggle}
           aria-expanded={expanded}
           className="mt-1 flex min-h-8 items-center text-[13px] text-novey-blue hover:underline"
         >
-          {etiquetaOpcionesMas(cat.items.length, expanded, max)}
+          {etiquetaOpcionesMas(total, expanded)}
         </button>
       )}
     </section>
@@ -333,7 +348,6 @@ export default function DepartmentsMenu() {
   // En Visual se muestran 6 y "Ver todo (N)"; la Lista existe para consultar
   // el contenido completo, así que muestra todas las categorías siempre.
   const visibles = vista === 'visual' ? categoriasVisibles(totalCats, deptExpanded) : totalCats;
-  const maxOpciones = vista === 'visual' ? MAX_OPCIONES_VISUAL : MAX_OPCIONES_LISTA;
 
   return (
     <div ref={rootRef} className="contents">
@@ -418,7 +432,7 @@ export default function DepartmentsMenu() {
                           <CategoryBlock
                             key={cat.name}
                             cat={cat}
-                            max={maxOpciones}
+                            vista={vista}
                             expanded={openCats.has(cat.name)}
                             onToggle={() => toggleCat(cat.name)}
                           />

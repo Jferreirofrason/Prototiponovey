@@ -11,12 +11,14 @@ import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import {
   MAX_CATEGORIAS_INICIALES,
-  MAX_OPCIONES_LISTA,
-  MAX_OPCIONES_VISUAL,
+  OPCIONES_INICIALES_VISUAL,
+  OPCIONES_TOPE_MENU,
   categoriasVisibles,
   etiquetaOpcionesMas,
+  etiquetaVerTodasEn,
   etiquetaVerTodo,
   necesitaOpcionesMas,
+  necesitaVerTodasEn,
   necesitaVerTodo,
   opcionesVisibles,
 } from '../lib/menu-reglas.mjs';
@@ -46,25 +48,39 @@ test('expandido muestra todas y el enlace pasa a "Ver menos"', () => {
   assert.equal(etiquetaVerTodo(8, true), 'Ver menos');
 });
 
-/* ---------- opciones por categoría (contador de OCULTAS) ---------- */
+/* ---------- opciones por categoría: 4 iniciales, tope de 8 en el menú ---------- */
 
-test('vista Visual: hasta 5 opciones sin enlace propio', () => {
-  assert.equal(necesitaOpcionesMas(5, MAX_OPCIONES_VISUAL), false);
-  assert.equal(opcionesVisibles(5, false, MAX_OPCIONES_VISUAL), 5);
+test('vista Visual: con 4 opciones o menos se muestran todas, sin expansor', () => {
+  for (const total of [1, 3, 4]) {
+    assert.equal(necesitaOpcionesMas(total, 'visual'), false);
+    assert.equal(opcionesVisibles(total, false, 'visual'), total);
+  }
 });
 
-test('el contador de una categoría cuenta SOLO las ocultas, no el total', () => {
-  // Piscinas: 7 opciones, 5 a la vista → "Ver 2 opciones más" (nunca "(7)")
-  assert.equal(etiquetaOpcionesMas(7, false, MAX_OPCIONES_VISUAL), 'Ver 2 opciones más');
-  assert.equal(etiquetaOpcionesMas(6, false, MAX_OPCIONES_VISUAL), 'Ver 1 opción más');
-  assert.equal(etiquetaOpcionesMas(12, false, MAX_OPCIONES_LISTA), 'Ver 4 opciones más');
-  assert.equal(etiquetaOpcionesMas(7, true, MAX_OPCIONES_VISUAL), 'Ver menos');
+test('vista Visual: entre 5 y 8 arranca en 4 y el contador dice cuántas agrega', () => {
+  assert.equal(opcionesVisibles(6, false, 'visual'), OPCIONES_INICIALES_VISUAL);
+  assert.equal(etiquetaOpcionesMas(5, false), 'Ver 1 opción más');
+  assert.equal(etiquetaOpcionesMas(6, false), 'Ver 2 opciones más');
+  assert.equal(etiquetaOpcionesMas(8, false), 'Ver 4 opciones más');
+  assert.equal(opcionesVisibles(6, true, 'visual'), 6);
+  assert.equal(etiquetaOpcionesMas(6, true), 'Ver menos');
 });
 
-test('vista Lista: hasta 8 opciones por categoría antes del enlace', () => {
-  assert.equal(necesitaOpcionesMas(7, MAX_OPCIONES_LISTA), false);
-  assert.equal(opcionesVisibles(7, false, MAX_OPCIONES_LISTA), 7);
-  assert.equal(opcionesVisibles(12, false, MAX_OPCIONES_LISTA), MAX_OPCIONES_LISTA);
+test('con más de 8 el menú topea en 8 y el resto va a la página completa', () => {
+  // Piscinas: 12 opciones → arranca en 4, "Ver 4 opciones más" (las que
+  // agrega hasta el tope, nunca 8), expandida muestra 8 y ofrece la página.
+  assert.equal(opcionesVisibles(12, false, 'visual'), OPCIONES_INICIALES_VISUAL);
+  assert.equal(etiquetaOpcionesMas(12, false), 'Ver 4 opciones más');
+  assert.equal(opcionesVisibles(12, true, 'visual'), OPCIONES_TOPE_MENU);
+  assert.equal(necesitaVerTodasEn(12), true);
+  assert.equal(necesitaVerTodasEn(8), false);
+  assert.equal(etiquetaVerTodasEn('Piscinas'), 'Ver todas en Piscinas');
+});
+
+test('vista Lista: hasta 8 de entrada, sin expansor, con enlace si hay más', () => {
+  assert.equal(opcionesVisibles(7, false, 'lista'), 7);
+  assert.equal(opcionesVisibles(12, false, 'lista'), OPCIONES_TOPE_MENU);
+  assert.equal(necesitaOpcionesMas(12, 'lista'), false);
 });
 
 /* ---------- invariantes de los datos ---------- */
@@ -79,10 +95,15 @@ test('el ejemplo del brief existe: Aire libre con 8 categorías, 6 visibles en V
   }
   assert.equal(categoriasVisibles(aire.categories.length, false), 6);
   assert.equal(etiquetaVerTodo(aire.categories.length, false), 'Ver todo (8)');
-  // Piscinas es el caso testigo del contador de ocultas
+  // Piscinas es el caso testigo del brief: 12 opciones
   const piscinas = aire.categories.find((c) => c.name === 'Piscinas');
-  assert.equal(piscinas.items.length, 7);
-  assert.equal(etiquetaOpcionesMas(piscinas.items.length, false, MAX_OPCIONES_VISUAL), 'Ver 2 opciones más');
+  assert.equal(piscinas.items.length, 12);
+  assert.equal(etiquetaOpcionesMas(piscinas.items.length, false), 'Ver 4 opciones más');
+  assert.equal(necesitaVerTodasEn(piscinas.items.length), true);
+  // Camping con 6: arranca en 4 → "Ver 2 opciones más"
+  const camping = aire.categories.find((c) => c.name === 'Camping');
+  assert.equal(camping.items.length, 6);
+  assert.equal(etiquetaOpcionesMas(camping.items.length, false), 'Ver 2 opciones más');
 });
 
 test('capitalización natural: mayúscula inicial, sin Title Case (salvo siglas)', () => {
