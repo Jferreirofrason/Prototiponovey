@@ -7,41 +7,41 @@
         "name": "Pintura",
         "image": "/images/departments/acabados-pintura.jpg",
         "items": [
-          "Pintura Interior",
-          "Pintura Exterior",
+          "Pintura interior",
+          "Pintura exterior",
           "Esmaltes",
-          "Barnices Y Lacas",
+          "Barnices y lacas",
           "Impermeabilizantes",
           "Selladores"
         ]
       },
       {
-        "name": "Pisos Y Revestimientos",
+        "name": "Pisos y revestimientos",
         "image": "/images/departments/acabados-pisos-y-revestimientos.jpg",
         "items": [
           "Cerámica",
           "Porcelanato",
-          "Pisos De Madera",
-          "Pisos Laminados",
-          "Pisos Vinílicos",
+          "Pisos de madera",
+          "Pisos laminados",
+          "Pisos vinílicos",
           "Alfombras"
         ]
       },
       {
-        "name": "Adhesivos Y Pegamentos",
+        "name": "Adhesivos y pegamentos",
         "image": "/images/departments/acabados-adhesivos-y-pegamentos.jpg",
         "items": [
-          "Pegamento Para Cerámica",
-          "Pegamento Para Madera",
+          "Pegamento para cerámica",
+          "Pegamento para madera",
           "Silicona",
-          "Pegamento General",
-          "Cintas Adhesivas"
+          "Pegamento general",
+          "Cintas adhesivas"
         ]
       }
     ]
   },
   {
-    "name": "Aire Libre Y Recreación",
+    "name": "Aire libre y recreación",
     "slug": "aire-libre-y-recreacion",
     "categories": [
       {
@@ -49,57 +49,57 @@
         "image": "/images/departments/aire-libre-y-recreacion-articulos-de-acampar.jpg",
         "items": [
           "Carpas",
-          "Bolsas De Dormir",
+          "Bolsas de dormir",
           "Linternas",
           "Conservadoras",
           "Mochilas",
-          "Accesorios De Camping"
+          "Accesorios de camping"
         ]
       },
       {
         "name": "Parrillas",
         "image": "/images/departments/aire-libre-y-recreacion-barbacoas.jpg",
         "items": [
-          "Parrillas A Carbón",
-          "Parrillas A Gas",
+          "Parrillas a carbón",
+          "Parrillas a gas",
           "Ahumadores",
-          "Accesorios Para Parrilla",
-          "Carbón Y Leña"
+          "Accesorios para parrilla",
+          "Carbón y leña"
         ]
       },
       {
-        "name": "Muebles De Exterior",
+        "name": "Muebles de exterior",
         "image": "/images/departments/aire-libre-y-recreacion-muebles-de-exterior.jpg",
         "items": [
-          "Juegos De Jardín",
-          "Mesas Exteriores",
-          "Sillas Exteriores",
+          "Juegos de jardín",
+          "Mesas exteriores",
+          "Sillas exteriores",
           "Reposeras",
           "Sombrillas",
-          "Fundas Protectoras"
+          "Fundas protectoras"
         ]
       },
       {
         "name": "Piscinas",
         "image": "/images/departments/aire-libre-y-recreacion-piscinas.jpg",
         "items": [
-          "Piscinas Inflables",
-          "Piscinas Estructurales",
-          "Químicos Y Limpieza",
-          "Bombas Y Filtros",
-          "Accesorios De Piscina",
-          "Inflables Y Flotadores",
+          "Piscinas inflables",
+          "Piscinas estructurales",
+          "Químicos y limpieza",
+          "Bombas y filtros",
+          "Accesorios de piscina",
+          "Inflables y flotadores",
           "Cobertores"
         ]
       },
       {
         "name": "Jardín",
         "items": [
-          "Plantas Y Semillas",
+          "Plantas y semillas",
           "Macetas",
-          "Tierra Y Sustratos",
+          "Tierra y sustratos",
           "Riego",
-          "Herramientas De Jardín"
+          "Herramientas de jardín"
         ]
       },
       {
@@ -108,27 +108,27 @@
           "Pelotas",
           "Fitness",
           "Natación",
-          "Camping Deportivo",
-          "Accesorios Deportivos"
+          "Camping deportivo",
+          "Accesorios deportivos"
         ]
       },
       {
         "name": "Bicicletas",
         "items": [
-          "Bicicletas De Adulto",
-          "Bicicletas Infantiles",
+          "Bicicletas de adulto",
+          "Bicicletas infantiles",
           "Cascos",
-          "Accesorios De Ciclismo",
-          "Luces Y Candados"
+          "Accesorios de ciclismo",
+          "Luces y candados"
         ]
       },
       {
-        "name": "Juegos Al Aire Libre",
+        "name": "Juegos al aire libre",
         "items": [
           "Hamacas",
           "Toboganes",
-          "Camas Elásticas",
-          "Juegos De Agua",
+          "Camas elásticas",
+          "Juegos de agua",
           "Areneros"
         ]
       }
@@ -143,32 +143,32 @@
         "image": "/images/departments/alimentos-bebidas.jpg",
         "items": [
           "Agua",
-          "Café Y Té",
-          "Jugos Y Néctares",
+          "Café y té",
+          "Jugos y néctares",
           "Refrescos",
-          "Bebidas Energéticas"
+          "Bebidas energéticas"
         ]
       },
       {
         "name": "Despensa",
         "image": "/images/departments/alimentos-despensa.jpg",
         "items": [
-          "Arroz Y Granos",
-          "Aceites Y Vinagres",
+          "Arroz y granos",
+          "Aceites y vinagres",
           "Conservas",
           "Pasta",
-          "Salsas Y Condimentos"
+          "Salsas y condimentos"
         ]
       },
       {
-        "name": "Snacks Y Dulces",
+        "name": "Snacks y dulces",
         "image": "/images/departments/alimentos-snacks-y-dulces.jpg",
         "items": [
           "Chocolates",
           "Galletas",
-          "Papas Fritas",
-          "Frutos Secos",
-          "Caramelos Y Gomitas"
+          "Papas fritas",
+          "Frutos secos",
+          "Caramelos y gomitas"
         ]
       }
     ]
@@ -178,45 +178,45 @@
     "slug": "automovil",
     "categories": [
       {
-        "name": "Accesorios Para Auto",
+        "name": "Accesorios para auto",
         "image": "/images/departments/automovil-accesorios-para-auto.jpg",
         "items": [
           "Alfombras",
           "Cargadores",
-          "Forros Para Asientos",
+          "Forros para asientos",
           "Organizadores",
           "Parasoles"
         ]
       },
       {
-        "name": "Limpieza De Vehículos",
+        "name": "Limpieza de vehículos",
         "image": "/images/departments/automovil-limpieza-de-vehiculos.jpg",
         "items": [
           "Aspiradoras",
-          "Ceras Y Pulimento",
-          "Esponjas Y Bayetas",
-          "Shampoo Para Auto",
+          "Ceras y pulimento",
+          "Esponjas y bayetas",
+          "Shampoo para auto",
           "Aromatizantes"
         ]
       },
       {
-        "name": "Herramientas Para Auto",
+        "name": "Herramientas para auto",
         "image": "/images/departments/automovil-herramientas-para-auto.jpg",
         "items": [
-          "Cables Para Batería",
-          "Gatos Hidráulicos",
+          "Cables para batería",
+          "Gatos hidráulicos",
           "Infladores",
-          "Llaves Y Dados",
-          "Medidores De Presión"
+          "Llaves y dados",
+          "Medidores de presión"
         ]
       },
       {
-        "name": "Lubricantes Y Fluidos",
+        "name": "Lubricantes y fluidos",
         "image": "/images/departments/automovil-lubricantes-y-fluidos.jpg",
         "items": [
-          "Aceites Para Motor",
+          "Aceites para motor",
           "Anticongelante",
-          "Líquido De Frenos",
+          "Líquido de frenos",
           "Refrigerante",
           "Aditivos"
         ]
@@ -231,11 +231,11 @@
         "name": "Grifería",
         "image": "/images/departments/bano-griferia.jpg",
         "items": [
-          "Grifos Para Lavabo",
-          "Grifos Para Ducha",
+          "Grifos para lavabo",
+          "Grifos para ducha",
           "Regaderas",
           "Mezcladores",
-          "Repuestos De Grifería"
+          "Repuestos de grifería"
         ]
       },
       {
@@ -246,29 +246,29 @@
           "Lavabos",
           "Urinarios",
           "Bidets",
-          "Asientos Para Inodoro"
+          "Asientos para inodoro"
         ]
       },
       {
-        "name": "Accesorios Para Baño",
+        "name": "Accesorios para baño",
         "image": "/images/departments/bano-accesorios-para-bano.jpg",
         "items": [
           "Espejos",
           "Jaboneras",
-          "Porta Papel Higiénico",
+          "Porta papel higiénico",
           "Toalleros",
-          "Perchas Y Ganchos"
+          "Perchas y ganchos"
         ]
       },
       {
-        "name": "Muebles Para Baño",
+        "name": "Muebles para baño",
         "image": "/images/departments/bano-muebles-para-bano.jpg",
         "items": [
           "Gabinetes",
           "Organizadores",
           "Botiquines",
           "Estanterías",
-          "Espejos Para Baño"
+          "Espejos para baño"
         ]
       }
     ]
@@ -286,29 +286,29 @@
           "Licuadoras",
           "Microondas",
           "Tostadoras",
-          "Procesadores De Alimentos"
+          "Procesadores de alimentos"
         ]
       },
       {
         "name": "Utensilios",
         "image": "/images/departments/cocina-utensilios.jpg",
         "items": [
-          "Cuchillos Y Tablas",
-          "Espátulas Y Cucharones",
-          "Tazas Y Cucharas Medidoras",
+          "Cuchillos y tablas",
+          "Espátulas y cucharones",
+          "Tazas y cucharas medidoras",
           "Ralladores",
           "Coladores"
         ]
       },
       {
-        "name": "Vajilla Y Cristalería",
+        "name": "Vajilla y cristalería",
         "image": "/images/departments/cocina-vajilla-y-cristaleria.jpg",
         "items": [
           "Platos",
-          "Tazas Y Vasos",
+          "Tazas y vasos",
           "Cubiertos",
           "Copas",
-          "Jarras Y Botellas"
+          "Jarras y botellas"
         ]
       },
       {
@@ -329,36 +329,36 @@
     "slug": "construccion",
     "categories": [
       {
-        "name": "Cemento Y Concreto",
+        "name": "Cemento y concreto",
         "image": "/images/departments/construccion-cemento-y-concreto.jpg",
         "items": [
-          "Cemento Gris",
-          "Cemento Blanco",
-          "Concreto Premezclado",
+          "Cemento gris",
+          "Cemento blanco",
+          "Concreto premezclado",
           "Mortero",
-          "Aditivos Para Concreto"
+          "Aditivos para concreto"
         ]
       },
       {
-        "name": "Ladrillos Y Bloques",
+        "name": "Ladrillos y bloques",
         "image": "/images/departments/construccion-ladrillos-y-bloques.jpg",
         "items": [
-          "Ladrillos Rojos",
-          "Bloques De Concreto",
+          "Ladrillos rojos",
+          "Bloques de concreto",
           "Adoquines",
-          "Bloques De Vidrio",
+          "Bloques de vidrio",
           "Tejas"
         ]
       },
       {
-        "name": "Arena Y Grava",
+        "name": "Arena y grava",
         "image": "/images/departments/construccion-arena-y-grava.jpg",
         "items": [
-          "Arena Para Construcción",
+          "Arena para construcción",
           "Grava",
-          "Piedra Triturada",
-          "Piedra Decorativa",
-          "Tierra Para Relleno"
+          "Piedra triturada",
+          "Piedra decorativa",
+          "Tierra para relleno"
         ]
       },
       {
@@ -369,7 +369,7 @@
           "Vigas",
           "Contrachapado",
           "MDF",
-          "Molduras De Madera"
+          "Molduras de madera"
         ]
       }
     ]
@@ -379,47 +379,47 @@
     "slug": "decoracion",
     "categories": [
       {
-        "name": "Cortinas Y Persianas",
+        "name": "Cortinas y persianas",
         "image": "/images/departments/decoracion-cortinas-y-persianas.jpg",
         "items": [
-          "Cortinas De Tela",
-          "Persianas Enrollables",
-          "Persianas Verticales",
-          "Rieles Y Barras",
-          "Cortinas Blackout"
+          "Cortinas de tela",
+          "Persianas enrollables",
+          "Persianas verticales",
+          "Rieles y barras",
+          "Cortinas blackout"
         ]
       },
       {
-        "name": "Iluminación Decorativa",
+        "name": "Iluminación decorativa",
         "image": "/images/departments/decoracion-iluminacion-decorativa.jpg",
         "items": [
-          "Lámparas De Techo",
-          "Lámparas De Mesa",
-          "Lámparas De Pie",
-          "Apliques De Pared",
-          "Guirnaldas De Luces"
+          "Lámparas de techo",
+          "Lámparas de mesa",
+          "Lámparas de pie",
+          "Apliques de pared",
+          "Guirnaldas de luces"
         ]
       },
       {
-        "name": "Cuadros Y Espejos",
+        "name": "Cuadros y espejos",
         "image": "/images/departments/decoracion-cuadros-y-espejos.jpg",
         "items": [
-          "Cuadros Decorativos",
+          "Cuadros decorativos",
           "Marcos",
-          "Espejos Decorativos",
-          "Vinilos Para Pared",
-          "Relojes De Pared"
+          "Espejos decorativos",
+          "Vinilos para pared",
+          "Relojes de pared"
         ]
       },
       {
-        "name": "Textiles Para El Hogar",
+        "name": "Textiles para el hogar",
         "image": "/images/departments/decoracion-textiles-para-el-hogar.jpg",
         "items": [
           "Cojines",
           "Mantas",
           "Tapetes",
           "Fundas",
-          "Caminos De Mesa"
+          "Caminos de mesa"
         ]
       }
     ]
@@ -429,24 +429,24 @@
     "slug": "electrico",
     "categories": [
       {
-        "name": "Cables Y Alambres",
+        "name": "Cables y alambres",
         "image": "/images/departments/electrico-cables-y-alambres.jpg",
         "items": [
           "Cable THHW",
           "Cable THW",
-          "Alambre Por Calibre",
-          "Cable De Uso Rudo",
-          "Extensiones Eléctricas"
+          "Alambre por calibre",
+          "Cable de uso rudo",
+          "Extensiones eléctricas"
         ]
       },
       {
-        "name": "Interruptores Y Contactos",
+        "name": "Interruptores y contactos",
         "image": "/images/departments/electrico-interruptores-y-contactos.jpg",
         "items": [
-          "Interruptores Sencillos",
-          "Interruptores Dobles",
+          "Interruptores sencillos",
+          "Interruptores dobles",
           "Contactos",
-          "Placas Decorativas",
+          "Placas decorativas",
           "Atenuadores"
         ]
       },
@@ -457,18 +457,18 @@
           "Focos LED",
           "Tubos LED",
           "Reflectores",
-          "Luminarias De Emergencia",
-          "Lámparas Solares"
+          "Luminarias de emergencia",
+          "Lámparas solares"
         ]
       },
       {
-        "name": "Tableros Y Protecciones",
+        "name": "Tableros y protecciones",
         "image": "/images/departments/electrico-tableros-y-protecciones.jpg",
         "items": [
-          "Centro De Carga",
-          "Pastillas Térmicas",
-          "Reguladores De Voltaje",
-          "Supresores De Picos",
+          "Centro de carga",
+          "Pastillas térmicas",
+          "Reguladores de voltaje",
+          "Supresores de picos",
           "Temporizadores"
         ]
       }
@@ -484,20 +484,20 @@
         "items": [
           "Audífonos",
           "Bocinas Bluetooth",
-          "Sistemas De Sonido",
+          "Sistemas de sonido",
           "Micrófonos",
-          "Barras De Sonido"
+          "Barras de sonido"
         ]
       },
       {
         "name": "Televisores",
         "image": "/images/departments/electronica-televisores.jpg",
         "items": [
-          "TV 32 Pulgadas",
-          "TV 43 Pulgadas",
-          "TV 55 Pulgadas",
-          "Soportes Para TV",
-          "Controles Remotos"
+          "TV 32 pulgadas",
+          "TV 43 pulgadas",
+          "TV 55 pulgadas",
+          "Soportes para TV",
+          "Controles remotos"
         ]
       },
       {
@@ -506,7 +506,7 @@
         "items": [
           "Laptops",
           "Tablets",
-          "Teclados Y Mouse",
+          "Teclados y mouse",
           "Monitores",
           "Impresoras"
         ]
@@ -518,14 +518,14 @@
           "Cables USB",
           "Cargadores",
           "Memorias USB",
-          "Fundas Y Protectores",
-          "Baterías Portátiles"
+          "Fundas y protectores",
+          "Baterías portátiles"
         ]
       }
     ]
   },
   {
-    "name": "Escolar Y Oficina",
+    "name": "Escolar y oficina",
     "slug": "escolar-y-oficina",
     "categories": [
       {
@@ -533,10 +533,10 @@
         "image": "/images/departments/escolar-y-oficina-papeleria.jpg",
         "items": [
           "Cuadernos",
-          "Hojas Blancas",
+          "Hojas blancas",
           "Carpetas",
-          "Blocks Y Libretas",
-          "Sobres Y Etiquetas"
+          "Blocks y libretas",
+          "Sobres y etiquetas"
         ]
       },
       {
@@ -546,19 +546,19 @@
           "Bolígrafos",
           "Lápices",
           "Marcadores",
-          "Plumas Fuente",
+          "Plumas fuente",
           "Correctores"
         ]
       },
       {
-        "name": "Arte Y Manualidades",
+        "name": "Arte y manualidades",
         "image": "/images/departments/escolar-y-oficina-arte-y-manualidades.jpg",
         "items": [
-          "Pinturas Y Acuarela",
+          "Pinturas y acuarela",
           "Pinceles",
           "Plastilina",
           "Cartulinas",
-          "Pegamento Escolar"
+          "Pegamento escolar"
         ]
       },
       {
@@ -566,10 +566,10 @@
         "image": "/images/departments/escolar-y-oficina-organizacion.jpg",
         "items": [
           "Archiveros",
-          "Bandejas Para Escritorio",
-          "Porta Lápices",
+          "Bandejas para escritorio",
+          "Porta lápices",
           "Organizadores",
-          "Agendas Y Planificadores"
+          "Agendas y planificadores"
         ]
       }
     ]
@@ -579,47 +579,47 @@
     "slug": "ferreteria",
     "categories": [
       {
-        "name": "Herramientas De Mano",
+        "name": "Herramientas de mano",
         "image": "/images/departments/ferreteria-herramientas-de-mano.jpg",
         "items": [
           "Martillos",
           "Destornilladores",
           "Alicates",
-          "Llaves Ajustables",
+          "Llaves ajustables",
           "Serruchos"
         ]
       },
       {
-        "name": "Herramientas Eléctricas",
+        "name": "Herramientas eléctricas",
         "image": "/images/departments/ferreteria-herramientas-electricas.jpg",
         "items": [
           "Taladros",
           "Lijadoras",
-          "Sierras Eléctricas",
+          "Sierras eléctricas",
           "Esmeriles",
           "Atornilladores"
         ]
       },
       {
-        "name": "Tornillería Y Fijación",
+        "name": "Tornillería y fijación",
         "image": "/images/departments/ferreteria-tornilleria-y-fijacion.jpg",
         "items": [
           "Tornillos",
           "Clavos",
           "Taquetes",
-          "Tuercas Y Rondanas",
+          "Tuercas y rondanas",
           "Anclajes"
         ]
       },
       {
-        "name": "Candados Y Cerraduras",
+        "name": "Candados y cerraduras",
         "image": "/images/departments/ferreteria-candados-y-cerraduras.jpg",
         "items": [
           "Candados",
-          "Cerraduras De Pomo",
+          "Cerraduras de pomo",
           "Cerrojos",
           "Bisagras",
-          "Cadenas De Seguridad"
+          "Cadenas de seguridad"
         ]
       }
     ]
@@ -633,9 +633,9 @@
         "image": "/images/departments/hogar-muebles.jpg",
         "items": [
           "Sofás",
-          "Mesas De Centro",
+          "Mesas de centro",
           "Estanterías",
-          "Sillas De Comedor",
+          "Sillas de comedor",
           "Escritorios"
         ]
       },
@@ -647,16 +647,16 @@
           "Colchones",
           "Almohadas",
           "Sábanas",
-          "Cobijas Y Edredones"
+          "Cobijas y edredones"
         ]
       },
       {
         "name": "Organización",
         "image": "/images/departments/hogar-organizacion.jpg",
         "items": [
-          "Cajas De Almacenamiento",
-          "Closets Portátiles",
-          "Ganchos Y Perchas",
+          "Cajas de almacenamiento",
+          "Closets portátiles",
+          "Ganchos y perchas",
           "Repisas",
           "Zapateras"
         ]
@@ -669,7 +669,7 @@
           "Escobas",
           "Aspiradoras",
           "Detergentes",
-          "Botes De Basura"
+          "Botes de basura"
         ]
       }
     ]

@@ -1,31 +1,41 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { DEPARTMENTS, type Category, type Department } from '../data/departments-menu';
+import { DEPARTMENTS, type Category } from '../data/departments-menu';
 import {
   MAX_DESTACADAS,
+  MAX_OPCIONES_LISTA,
+  MAX_OPCIONES_VISUAL,
   categoriasVisibles,
-  etiquetaVerOpciones,
+  etiquetaOpcionesMas,
   etiquetaVerTodo,
-  necesitaVerOpciones,
+  necesitaOpcionesMas,
   necesitaVerTodo,
-  subcatsVisibles,
+  opcionesVisibles,
 } from '../lib/menu-reglas.mjs';
 import { ROUTES } from '../lib/routes';
 
 // Mega-menú "Departamentos".
 //
-// Desktop: rail de departamentos (izquierda, fijo) + panel de categorías
-// (derecha, con su propio scroll). El panel ocupa el mismo contenedor de
-// 1276px que el resto de la página, así su borde derecho termina donde
-// termina "Copiar cupón".
+// Dos maneras de navegar, elegibles desde el encabezado (que queda fijo):
+//   Visual — reconocer una categoría por su foto: destacadas arriba, grupos
+//            con hasta 5 opciones, "Ver todo (N)" si hay más de 6 categorías.
+//   Lista  — encontrar una palabra conocida leyendo: sin fotos, TODAS las
+//            categorías desde el comienzo, hasta 8 opciones por categoría.
 //
-// Jerarquía: departamento → categorías principales → subcategorías.
-// Reglas de visibilidad en lib/menu-reglas.mjs: 6 categorías + "Ver todo (N)",
-// 5 subcategorías + "Ver todas las opciones (N)".
+// Los contadores dicen cosas distintas a propósito: "Ver todo (8)" es el
+// total de categorías del departamento; "Ver 2 opciones más" son solo las
+// opciones ocultas de esa categoría.
+//
+// El panel ocupa el mismo contenedor de 1276px que el resto de la página
+// (su borde derecho termina donde termina "Copiar cupón"); solo el contenido
+// derecho scrollea, el rail y el encabezado quedan fijos.
 //
 // Mobile y tablet: navegación por niveles (departamentos → categorías →
-// subcategorías) con "← Volver", nada de megamenú achicado.
+// opciones) con "← Volver"; en pantallas angostas la vista arranca en Lista.
+
+type Vista = 'visual' | 'lista';
+const VISTA_KEY = 'novey-menu-vista';
 
 function ChevronDownIcon({ className = '' }: { className?: string }) {
   return (
@@ -52,11 +62,43 @@ function ArrowLeftIcon({ className = '' }: { className?: string }) {
   );
 }
 
+function GridIcon({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+      <rect x="14" y="14" width="7" height="7" rx="1" />
+    </svg>
+  );
+}
+
+function ListIcon({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <path d="M8 6h13M8 12h13M8 18h13" />
+      <path d="M3 6h.01M3 12h.01M3 18h.01" />
+    </svg>
+  );
+}
+
+/** Ícono genérico de categoría para el placeholder (caja de producto). */
+function BoxIcon({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <path d="M21 8 12 3 3 8v8l9 5 9-5V8Z" />
+      <path d="m3 8 9 5 9-5" />
+      <path d="M12 13v8" />
+    </svg>
+  );
+}
+
 /* ---------- piezas ---------- */
 
 /**
- * Miniatura de una categoría. Sin imagen (o si la imagen falla) muestra la
- * inicial sobre un fondo neutro: nunca un hueco roto.
+ * Miniatura de una categoría. Sin imagen (o si la imagen falla) muestra un
+ * ícono genérico de categoría sobre fondo neutro — nunca una inicial, que se
+ * confunde con un avatar o un error.
  */
 function CategoryThumb({ cat, size }: { cat: Category; size: number }) {
   const [failed, setFailed] = useState(false);
@@ -66,9 +108,9 @@ function CategoryThumb({ cat, size }: { cat: Category; size: number }) {
       <span
         style={px}
         aria-hidden="true"
-        className="flex shrink-0 items-center justify-center rounded-full border border-border-light bg-novey-blue-pale text-lg font-semibold text-novey-blue"
+        className="flex shrink-0 items-center justify-center rounded-full border border-border-light bg-[#f3f4f6] text-text-tertiary"
       >
-        {cat.name.charAt(0)}
+        <BoxIcon className="h-1/2 w-1/2" />
       </span>
     );
   }
@@ -85,12 +127,30 @@ function CategoryThumb({ cat, size }: { cat: Category; size: number }) {
   );
 }
 
-/** Fila de hasta 6 categorías destacadas: foto redonda + nombre, todo clickeable. */
+/** Selector Visual / Lista: control segmentado de dos opciones. */
+function ViewToggle({ vista, onChange }: { vista: Vista; onChange: (v: Vista) => void }) {
+  const base = 'flex h-9 min-w-[84px] items-center justify-center gap-1.5 rounded-novey px-3 text-[13px] transition-colors duration-150';
+  const activo = 'border border-novey-blue bg-white font-semibold text-novey-blue shadow-card';
+  const inactivo = 'border border-transparent text-text-secondary hover:text-text-ink';
+  return (
+    <div role="tablist" aria-label="Cómo ver las categorías" className="flex shrink-0 items-center gap-1 rounded-novey bg-[#f3f4f6] p-1">
+      <button type="button" role="tab" aria-selected={vista === 'visual'} onClick={() => onChange('visual')} className={`${base} ${vista === 'visual' ? activo : inactivo}`}>
+        <GridIcon className="h-4 w-4" />
+        Visual
+      </button>
+      <button type="button" role="tab" aria-selected={vista === 'lista'} onClick={() => onChange('lista')} className={`${base} ${vista === 'lista' ? activo : inactivo}`}>
+        <ListIcon className="h-4 w-4" />
+        Lista
+      </button>
+    </div>
+  );
+}
+
+/** Fila de hasta 6 categorías destacadas (solo vista Visual). */
 function FeaturedRow({ categories }: { categories: Category[] }) {
-  const destacadas = categories.slice(0, MAX_DESTACADAS);
   return (
     <ul className="grid grid-cols-3 gap-x-4 gap-y-5 md:grid-cols-4 xl:grid-cols-6">
-      {destacadas.map((cat) => (
+      {categories.slice(0, MAX_DESTACADAS).map((cat) => (
         <li key={cat.name}>
           <a href={ROUTES.categoria} className="group flex min-h-11 flex-col items-center gap-2 text-center">
             <CategoryThumb cat={cat} size={72} />
@@ -105,28 +165,30 @@ function FeaturedRow({ categories }: { categories: Category[] }) {
 }
 
 /**
- * Una categoría principal con sus subcategorías: título enlazado, hasta 5
- * subcategorías y su propio "Ver todas las opciones (N)" cuando hay más.
+ * Una categoría con sus opciones. En Visual muestra hasta 5, en Lista hasta 8;
+ * si hay más, "Ver N opciones más" (N = solo las ocultas).
  */
 function CategoryBlock({
   cat,
+  max,
   expanded,
   onToggle,
 }: {
   cat: Category;
+  max: number;
   expanded: boolean;
   onToggle: () => void;
 }) {
-  const visibles = subcatsVisibles(cat.items.length, expanded);
+  const visibles = opcionesVisibles(cat.items.length, expanded, max);
   return (
     <section aria-label={cat.name}>
-      <h4 className="border-b-2 border-novey-blue pb-2">
-        <a href={ROUTES.categoria} className="text-[15px] font-semibold text-text-ink hover:text-novey-blue">
+      <h4 className="border-b border-border-light pb-2">
+        <a href={ROUTES.categoria} className="text-[15px] font-semibold text-text-ink hover:text-novey-blue hover:underline">
           {cat.name}
         </a>
       </h4>
-      {cat.items.length > 0 && (
-        <ul className="mt-3 space-y-1">
+      {cat.items.length > 0 ? (
+        <ul className="mt-2.5 space-y-0.5">
           {cat.items.slice(0, visibles).map((item) => (
             <li key={item}>
               <a
@@ -138,15 +200,17 @@ function CategoryBlock({
             </li>
           ))}
         </ul>
+      ) : (
+        <p className="mt-2.5 text-[13px] text-text-tertiary">Muy pronto vas a encontrar opciones acá.</p>
       )}
-      {necesitaVerOpciones(cat.items.length) && (
+      {necesitaOpcionesMas(cat.items.length, max) && (
         <button
           type="button"
           onClick={onToggle}
           aria-expanded={expanded}
-          className="mt-1 flex min-h-8 items-center text-[13px] font-medium text-novey-blue hover:underline"
+          className="mt-1 flex min-h-8 items-center text-[13px] text-novey-blue hover:underline"
         >
-          {etiquetaVerOpciones(cat.items.length, expanded)}
+          {etiquetaOpcionesMas(cat.items.length, expanded, max)}
         </button>
       )}
     </section>
@@ -157,17 +221,19 @@ function CategoryBlock({
 
 export default function DepartmentsMenu() {
   const [open, setOpen] = useState(false);
+  const [vista, setVista] = useState<Vista>('visual');
   const [activeSlug, setActiveSlug] = useState(DEPARTMENTS[0]?.slug ?? '');
-  // "Ver todo (N)" del departamento activo.
+  // "Ver todo (N)" del departamento activo (solo vista Visual).
   const [deptExpanded, setDeptExpanded] = useState(false);
-  // "Ver todas las opciones (N)" por categoría del departamento activo.
+  // "Ver N opciones más" por categoría del departamento activo.
   const [openCats, setOpenCats] = useState<Set<string>>(new Set());
-  // Niveles mobile: lista de departamentos → categorías → subcategorías.
+  // Niveles mobile: departamentos → categorías → opciones.
   const [mobileDept, setMobileDept] = useState<string | null>(null);
   const [mobileCat, setMobileCat] = useState<string | null>(null);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const railRef = useRef<HTMLUListElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   // Tolerancia al movimiento del mouse entre columnas: el cambio de
   // departamento espera un instante y se cancela si el puntero siguió de largo.
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -178,12 +244,34 @@ export default function DepartmentsMenu() {
     ? mobileActiveDept.categories.find((c) => c.name === mobileCat) ?? null
     : null;
 
+  // La vista elegida se recuerda durante la sesión. En pantallas angostas la
+  // primera vez arranca en Lista: es más fácil de recorrer en una columna.
+  useEffect(() => {
+    try {
+      const guardada = window.sessionStorage.getItem(VISTA_KEY);
+      if (guardada === 'visual' || guardada === 'lista') setVista(guardada);
+      else if (window.matchMedia('(max-width: 767px)').matches) setVista('lista');
+    } catch {
+      /* sin storage: queda la vista por defecto */
+    }
+  }, []);
+
+  const cambiarVista = (v: Vista) => {
+    setVista(v);
+    try {
+      window.sessionStorage.setItem(VISTA_KEY, v);
+    } catch {}
+    // Posición predecible: el contenido vuelve al comienzo.
+    scrollRef.current?.scrollTo({ top: 0 });
+  };
+
   const selectDept = (slug: string) => {
     if (slug === activeSlug) return;
     setActiveSlug(slug);
-    // Cada departamento arranca contraído: menos decisiones simultáneas.
+    // Cada departamento arranca contraído y desde arriba.
     setDeptExpanded(false);
     setOpenCats(new Set());
+    scrollRef.current?.scrollTo({ top: 0 });
   };
 
   const hoverDept = (slug: string) => {
@@ -241,7 +329,11 @@ export default function DepartmentsMenu() {
     });
   };
 
-  const visibles = activeDept ? categoriasVisibles(activeDept.categories.length, deptExpanded) : 0;
+  const totalCats = activeDept?.categories.length ?? 0;
+  // En Visual se muestran 6 y "Ver todo (N)"; la Lista existe para consultar
+  // el contenido completo, así que muestra todas las categorías siempre.
+  const visibles = vista === 'visual' ? categoriasVisibles(totalCats, deptExpanded) : totalCats;
+  const maxOpciones = vista === 'visual' ? MAX_OPCIONES_VISUAL : MAX_OPCIONES_LISTA;
 
   return (
     <div ref={rootRef} className="contents">
@@ -264,7 +356,7 @@ export default function DepartmentsMenu() {
           {/* Mismo contenedor de página que la barra del cupón: el borde
               derecho del panel termina donde termina "Copiar cupón". */}
           <div className="mx-auto hidden w-full max-w-page px-4 pt-2 sm:px-6 lg:block">
-            <div className="flex max-h-[min(720px,calc(100vh-190px))] items-stretch overflow-hidden rounded-novey border border-border-light bg-white shadow-[0_16px_40px_rgba(0,0,0,0.14)]">
+            <div className="flex max-h-[80vh] items-stretch overflow-hidden rounded-novey border border-border-light bg-white shadow-[0_16px_40px_rgba(0,0,0,0.14)]">
               {/* Rail de departamentos: fijo mientras el contenido scrollea */}
               <div className="flex w-[280px] shrink-0 flex-col border-r border-border-light bg-[#fafbfc]">
                 <p className="border-b border-border-light px-5 py-3.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-text-tertiary">
@@ -296,38 +388,44 @@ export default function DepartmentsMenu() {
                 </ul>
               </div>
 
-              {/* Panel de contenido: usa todo el ancho restante */}
+              {/* Panel derecho: encabezado fijo, contenido con scroll propio */}
               <div className="flex min-w-0 flex-1 flex-col">
-                <div className="border-b border-border-light px-8 pb-4 pt-5">
-                  <h3 className="text-[22px] font-bold leading-tight text-text-ink">{activeDept?.name}</h3>
+                <div aria-live="polite" className="flex shrink-0 items-center justify-between gap-4 border-b border-border-light px-8 py-4">
+                  <h3 className="min-w-0 truncate text-[22px] font-bold leading-tight text-text-ink">{activeDept?.name}</h3>
+                  <ViewToggle vista={vista} onChange={cambiarVista} />
                 </div>
 
-                <div className="flex-1 overflow-y-auto px-8 pb-8 pt-6">
-                  {!activeDept || activeDept.categories.length === 0 ? (
+                <div ref={scrollRef} className="flex-1 overflow-y-auto px-8 pb-8 pt-6">
+                  {!activeDept || totalCats === 0 ? (
                     <p className="py-10 text-center text-[14px] text-text-tertiary">
-                      Este departamento todavía no tiene categorías para mostrar.
+                      Todavía no hay categorías en este departamento.
                     </p>
                   ) : (
                     <>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-text-tertiary">
-                        Categorías destacadas
-                      </p>
-                      <div className="mt-4">
-                        <FeaturedRow categories={activeDept.categories} />
-                      </div>
+                      {vista === 'visual' && (
+                        <>
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-text-tertiary">
+                            Categorías destacadas
+                          </p>
+                          <div className="mb-9 mt-4">
+                            <FeaturedRow categories={activeDept.categories} />
+                          </div>
+                        </>
+                      )}
 
-                      <div className="mt-9 grid grid-cols-2 gap-x-10 gap-y-9 xl:grid-cols-3">
+                      <div className={`grid gap-x-10 ${vista === 'visual' ? 'grid-cols-2 gap-y-9 xl:grid-cols-3' : 'grid-cols-2 gap-y-7 lg:grid-cols-3 xl:grid-cols-4'}`}>
                         {activeDept.categories.slice(0, visibles).map((cat) => (
                           <CategoryBlock
                             key={cat.name}
                             cat={cat}
+                            max={maxOpciones}
                             expanded={openCats.has(cat.name)}
                             onToggle={() => toggleCat(cat.name)}
                           />
                         ))}
                       </div>
 
-                      {necesitaVerTodo(activeDept.categories.length) && (
+                      {vista === 'visual' && necesitaVerTodo(totalCats) && (
                         <div className="mt-8 border-t border-border-light pt-4">
                           <button
                             type="button"
@@ -335,7 +433,7 @@ export default function DepartmentsMenu() {
                             aria-expanded={deptExpanded}
                             className="flex min-h-11 items-center gap-1.5 text-[14px] font-semibold text-novey-blue hover:underline"
                           >
-                            {etiquetaVerTodo(activeDept.categories.length, deptExpanded)}
+                            {etiquetaVerTodo(totalCats, deptExpanded)}
                             <ChevronDownIcon className={`h-3.5 w-3.5 transition-transform duration-150 ${deptExpanded ? 'rotate-180' : ''}`} />
                           </button>
                         </div>
@@ -348,7 +446,7 @@ export default function DepartmentsMenu() {
           </div>
 
           {/* ---------- Mobile / tablet: navegación por niveles ---------- */}
-          <div className="max-h-[calc(100vh-160px)] overflow-y-auto border-b border-border-light bg-white shadow-lg lg:hidden">
+          <div className="max-h-[80vh] overflow-y-auto border-b border-border-light bg-white shadow-lg lg:hidden">
             {/* Nivel 1 — departamentos */}
             {!mobileActiveDept && (
               <nav aria-label="Departamentos" className="px-4 py-2">
@@ -375,18 +473,21 @@ export default function DepartmentsMenu() {
             {/* Nivel 2 — categorías del departamento */}
             {mobileActiveDept && !mobileActiveCat && (
               <div className="px-4 py-3">
-                <button
-                  type="button"
-                  onClick={() => setMobileDept(null)}
-                  className="flex min-h-11 items-center gap-2 text-[15px] font-medium text-novey-blue"
-                >
-                  <ArrowLeftIcon className="h-4 w-4" />
-                  Volver
-                </button>
+                <div className="flex items-center justify-between gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setMobileDept(null)}
+                    className="flex min-h-11 items-center gap-2 text-[15px] font-medium text-novey-blue"
+                  >
+                    <ArrowLeftIcon className="h-4 w-4" />
+                    Volver
+                  </button>
+                  <ViewToggle vista={vista} onChange={cambiarVista} />
+                </div>
                 <h3 className="mt-1 text-[20px] font-bold leading-tight text-text-ink">{mobileActiveDept.name}</h3>
                 {mobileActiveDept.categories.length === 0 ? (
                   <p className="py-8 text-center text-[14px] text-text-tertiary">
-                    Este departamento todavía no tiene categorías para mostrar.
+                    Todavía no hay categorías en este departamento.
                   </p>
                 ) : (
                   <ul className="mt-3 pb-4">
@@ -395,10 +496,12 @@ export default function DepartmentsMenu() {
                         <button
                           type="button"
                           onClick={() => (cat.items.length > 0 ? setMobileCat(cat.name) : undefined)}
-                          {...(cat.items.length === 0 ? { 'aria-label': `${cat.name} (sin subcategorías)` } : {})}
-                          className="flex min-h-14 w-full items-center gap-3 border-b border-border-light px-1 py-2 text-left"
+                          {...(cat.items.length === 0 ? { 'aria-label': `${cat.name} (sin opciones)` } : {})}
+                          className={`flex w-full items-center gap-3 border-b border-border-light px-1 text-left ${
+                            vista === 'visual' ? 'min-h-14 py-2' : 'min-h-12 py-3'
+                          }`}
                         >
-                          <CategoryThumb cat={cat} size={44} />
+                          {vista === 'visual' && <CategoryThumb cat={cat} size={44} />}
                           <span className="flex-1 text-[16px] text-text-ink">{cat.name}</span>
                           {cat.items.length > 0 && <ChevronRightIcon className="h-4 w-4 shrink-0 text-text-disabled" />}
                         </button>
@@ -409,7 +512,7 @@ export default function DepartmentsMenu() {
               </div>
             )}
 
-            {/* Nivel 3 — subcategorías de la categoría */}
+            {/* Nivel 3 — opciones de la categoría */}
             {mobileActiveDept && mobileActiveCat && (
               <div className="px-4 py-3">
                 <button
