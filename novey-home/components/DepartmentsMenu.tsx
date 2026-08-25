@@ -318,9 +318,10 @@ export default function DepartmentsMenu() {
         onClick={toggle}
         className={`flex h-[33px] shrink-0 items-center gap-2 whitespace-nowrap rounded-novey px-3 text-[12px] transition-colors duration-150 ${
           open
-            ? // Abierto: el botón se funde con el panel — sin radio inferior y
-              // con una extensión azul que baja hasta el borde de la barra
-              'relative rounded-b-none bg-novey-blue text-white after:absolute after:inset-x-0 after:top-full after:h-[11px] after:bg-novey-blue'
+            ? // Abierto: mismo alto y padding que cerrado; solo cambian color
+              // y radios. La continuidad la da el panel, que sube hasta tocar
+              // el borde inferior del botón.
+            'rounded-b-none bg-novey-blue text-white'
             : 'bg-white text-novey-navy hover:bg-novey-blue hover:text-white'
         }`}
       >
@@ -334,7 +335,7 @@ export default function DepartmentsMenu() {
           {/* Anclado al botón: mismo padding que la barra de pills y sin
               centrar, así el borde izquierdo del panel coincide con el del
               botón "Departamentos" y no queda separación vertical. */}
-          <div className="hidden w-full max-w-page px-4 md:px-6 lg:block">
+          <div className="-mt-[11px] hidden w-full max-w-page px-4 md:px-6 lg:block">
             <div className="flex max-h-[80vh] items-stretch overflow-hidden rounded-novey rounded-tl-none border border-border-light bg-white shadow-[0_16px_40px_rgba(0,0,0,0.14)]">
               {/* Rail de departamentos: fijo mientras el contenido scrollea */}
               <div className="flex w-[280px] shrink-0 flex-col border-r border-border-light bg-[#fafbfc]">
