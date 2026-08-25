@@ -618,6 +618,8 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
       }
       ponerAviso(id, null);
       mutarItems(r.restantes);
+      // Sin productos tampoco queda nada de cotización, ni siquiera su éxito.
+      if (r.restantes.length === 0) setCotExito(null);
       const serie = ++serieEliminado.current;
       setEliminado({ recuerdo: { item: r.item, indice: r.indice }, fase: 'visible' });
       programar(() => {
@@ -997,14 +999,9 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
                 </button>
               )}
             </div>
-            <div className="w-full max-w-[320px] text-left">
-              <CotizacionForm
-                aplicar={aplicarCotizacion}
-                exito={cotExito}
-                onCerrarExito={() => setCotExito(null)}
-                exitoRef={cotizacionOkRef}
-              />
-            </div>
+            {/* Sin productos no hay cotización: la sección desaparece entera
+                junto con el subtotal (al desmontarse, su formulario se cierra
+                y se limpia solo). */}
           </div>
         ) : (
           <>
