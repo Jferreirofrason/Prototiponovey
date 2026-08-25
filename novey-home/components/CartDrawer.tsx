@@ -26,6 +26,12 @@ import {
   restaurarItem,
   volverAAgregar,
 } from '../lib/carrito-drawer.mjs';
+import {
+  combinarConCarrito,
+  esFormatoValido,
+  normalizarNumero,
+  resolverCotizacion,
+} from '../lib/cotizaciones.mjs';
 
 const money = (n: number) => `$${n.toFixed(2)}`;
 
@@ -42,7 +48,28 @@ type Toast =
   | { tipo: 'eliminado'; recuerdo: Recuerdo; restaurando: boolean }
   | { tipo: 'restaurado'; nombre: string }
   | { tipo: 'error-quitar'; id: string; nombre: string }
-  | { tipo: 'error-restaurar'; recuerdo: Recuerdo };
+  | { tipo: 'error-restaurar'; recuerdo: Recuerdo }
+  | { tipo: 'cotizacion-ok'; texto: string };
+
+/** Números de cotización ya aplicados a este carrito (estado "ya agregada"). */
+const APLICADAS_KEY = 'novey-cotizaciones-aplicadas';
+const leerAplicadas = (): string[] => {
+  try {
+    const raw = window.localStorage.getItem(APLICADAS_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+const guardarAplicada = (numero: string) => {
+  try {
+    window.localStorage.setItem(APLICADAS_KEY, JSON.stringify([...leerAplicadas(), numero]));
+  } catch {}
+};
+
+/** WhatsApp real del sitio (el mismo del menú): canal de las acciones de ayuda. */
+const WHATSAPP_SOPORTE = 'https://wa.me/50764336170';
 
 declare global {
   interface Window {
@@ -59,8 +86,267 @@ function Spinner() {
   );
 }
 
+
+/** Ícono de etiqueta/cotización. */
+function QuoteIcon({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <path d="M4 4h16v14H8l-4 4V4Z" />
+      <path d="M8 9h8M8 13h5" />
+    </svg>
+  );
+}
+
+type AvisoCotizacion =
+  | { tipo: 'validacion' }
+  | { tipo: 'no-encontrada' }
+  | { tipo: 'vencida' }
+  | { tipo: 'ajena' }
+  | { tipo: 'ya-agregada' }
+  | { tipo: 'error-red' };
+
+type ConfirmacionCotizacion =
+  | { tipo: 'parcial'; disponibles: CartItem[]; noDisponibles: string[] }
+  | { tipo: 'precios'; items: CartItem[]; cambios: { name: string; precioCotizado: number; precioActual: number }[]; totalCotizado: number; totalActual: number };
+
+/**
+ * "Agregar una cotización": control expandible del drawer. Valida el formato,
+ * resuelve la cotización (demo: COT-1001 ok, COT-4004 stock parcial, COT-5005
+ * precios, COT-2002 vencida, COT-3003 ajena, COT-9999 error de red con
+ * reintento) y delega en `aplicar` la combinación con el carrito. Nunca toca
+ * el carrito por su cuenta ni cierra el drawer.
+ */
+function CotizacionForm({ aplicar }: { aplicar: (items: CartItem[], numero: string) => void }) {
+  const [abierto, setAbierto] = useState(false);
+  const [valor, setValor] = useState('');
+  const [procesando, setProcesando] = useState(false);
+  const [aviso, setAviso] = useState<AvisoCotizacion | null>(null);
+  const [confirmacion, setConfirmacion] = useState<ConfirmacionCotizacion | null>(null);
+
+  const disparadorRef = useRef<HTMLButtonElement>(null);
+  const campoRef = useRef<HTMLInputElement>(null);
+  const intentos = useRef<Map<string, number>>(new Map());
+
+  useEffect(() => {
+    if (abierto) campoRef.current?.focus();
+  }, [abierto]);
+
+  const limpiar = () => {
+    setValor('');
+    setAviso(null);
+    setConfirmacion(null);
+    setProcesando(false);
+  };
+
+  const cancelar = () => {
+    limpiar();
+    setAbierto(false);
+    disparadorRef.current?.focus();
+  };
+
+  const exito = (items: CartItem[], numero: string) => {
+    aplicar(items, numero);
+    limpiar();
+    setAbierto(false);
+  };
+
+  const enviar = (e?: { preventDefault: () => void }) => {
+    e?.preventDefault();
+    if (procesando) return; // sin envíos duplicados
+    const numero = normalizarNumero(valor);
+    if (!esFormatoValido(numero)) {
+      setAviso({ tipo: 'validacion' });
+      campoRef.current?.focus();
+      return;
+    }
+    setAviso(null);
+    setConfirmacion(null);
+    setProcesando(true);
+    const intento = (intentos.current.get(numero) ?? 0) + 1;
+    intentos.current.set(numero, intento);
+
+    window.setTimeout(() => {
+      setProcesando(false);
+      const r = resolverCotizacion(numero, { aplicadas: leerAplicadas(), intento });
+      if (r.tipo === 'ok') {
+        intentos.current.delete(numero);
+        exito(r.items as CartItem[], numero);
+      } else if (r.tipo === 'parcial' || r.tipo === 'precios') {
+        setConfirmacion(r as ConfirmacionCotizacion);
+      } else {
+        setAviso({ tipo: r.tipo } as AvisoCotizacion);
+      }
+    }, LATENCIA_MS);
+  };
+
+  const numero = normalizarNumero(valor);
+  const conError = aviso !== null;
+
+  return (
+    <div className="border-t border-border-light px-4 py-2">
+      <button
+        ref={disparadorRef}
+        type="button"
+        aria-expanded={abierto}
+        aria-controls="form-cotizacion"
+        onClick={() => (abierto ? cancelar() : setAbierto(true))}
+        className="flex min-h-11 w-full items-center gap-2 text-sm font-medium text-novey-blue hover:underline"
+      >
+        <QuoteIcon className="h-4 w-4 shrink-0" />
+        <span className="flex-1 text-left">Agregar una cotización</span>
+        <span aria-hidden="true" className={`text-xs transition-transform duration-150 ${abierto ? 'rotate-180' : ''}`}>▾</span>
+      </button>
+
+      {abierto && (
+        <form id="form-cotizacion" onSubmit={enviar} className="pb-2">
+          <label htmlFor="nro-cotizacion" className="text-xs font-medium text-text-secondary">
+            Número de cotización
+          </label>
+          <input
+            ref={campoRef}
+            id="nro-cotizacion"
+            type="text"
+            value={valor}
+            onChange={(e) => {
+              setValor(e.target.value);
+              if (aviso) setAviso(null);
+            }}
+            placeholder="Ingresa el número de cotización"
+            disabled={procesando || confirmacion !== null}
+            aria-invalid={conError || undefined}
+            aria-describedby={conError ? 'cotizacion-aviso' : undefined}
+            className={`mt-1 h-11 w-full rounded-novey border px-3 text-sm outline-none transition-colors placeholder:text-text-tertiary focus:border-novey-blue disabled:bg-[#F9FAFB] disabled:text-text-tertiary ${
+              conError ? 'border-feedback-error-dark' : 'border-border-medium'
+            }`}
+          />
+
+          {/* Avisos inline: siempre texto + acción, nunca solo color */}
+          <div id="cotizacion-aviso" aria-live="polite" className="text-sm">
+            {aviso?.tipo === 'validacion' && (
+              <p className="mt-1.5 text-feedback-error-dark">
+                Número de cotización inválido. Revisa el número e intenta nuevamente.
+              </p>
+            )}
+            {aviso?.tipo === 'no-encontrada' && (
+              <p className="mt-1.5 text-feedback-error-dark">
+                No encontramos una cotización con ese número.{' '}
+                <button type="button" onClick={() => enviar()} className="min-h-11 font-semibold underline">
+                  Intentar nuevamente
+                </button>
+              </p>
+            )}
+            {aviso?.tipo === 'vencida' && (
+              <p className="mt-1.5 text-feedback-error-dark">
+                Esta cotización está vencida y no puede agregarse al carrito.{' '}
+                <a href={WHATSAPP_SOPORTE} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center font-semibold underline">
+                  Solicitar una nueva cotización
+                </a>
+              </p>
+            )}
+            {aviso?.tipo === 'ajena' && (
+              <p className="mt-1.5 text-feedback-error-dark">
+                No pudimos agregar esta cotización a tu carrito.{' '}
+                <a href={WHATSAPP_SOPORTE} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center font-semibold underline">
+                  Contactar con soporte
+                </a>
+              </p>
+            )}
+            {aviso?.tipo === 'ya-agregada' && (
+              <p className="mt-1.5 text-text-secondary">Esta cotización ya fue agregada al carrito.</p>
+            )}
+            {aviso?.tipo === 'error-red' && (
+              <p className="mt-1.5 text-feedback-error-dark">
+                No pudimos agregar la cotización. Intenta nuevamente.{' '}
+                <button type="button" onClick={() => enviar()} className="min-h-11 font-semibold underline">
+                  Reintentar
+                </button>
+              </p>
+            )}
+          </div>
+
+          {/* Confirmaciones inline (no modales): stock parcial y precios */}
+          {confirmacion?.tipo === 'parcial' && (
+            <div className="mt-2 rounded-novey border border-border-medium bg-[#F9FAFB] p-3 text-sm" aria-live="polite">
+              <p className="font-medium">Algunos productos ya no están disponibles. ¿Quieres agregar los productos restantes?</p>
+              <ul className="mt-1.5 list-inside list-disc text-xs text-text-tertiary">
+                {confirmacion.noDisponibles.map((n) => (
+                  <li key={n}>{n}</li>
+                ))}
+              </ul>
+              <p className="mt-1.5 text-xs text-text-secondary">
+                Se agregarán solo los {confirmacion.disponibles.length} productos disponibles.
+              </p>
+              <div className="mt-2 flex gap-2">
+                <button type="button" onClick={() => exito(confirmacion.disponibles, numero)} className="flex h-11 flex-1 items-center justify-center rounded-novey bg-novey-blue px-3 text-sm font-semibold text-white hover:bg-novey-blue-dark">
+                  Agregar disponibles
+                </button>
+                <button type="button" onClick={cancelar} className="flex h-11 items-center justify-center rounded-novey border border-border-medium px-3 text-sm font-medium">
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          )}
+          {confirmacion?.tipo === 'precios' && (
+            <div className="mt-2 rounded-novey border border-border-medium bg-[#F9FAFB] p-3 text-sm" aria-live="polite">
+              <p className="font-medium">Algunos precios cambiaron desde que se creó la cotización.</p>
+              <ul className="mt-1.5 space-y-1 text-xs text-text-secondary">
+                {confirmacion.cambios.map((c) => (
+                  <li key={c.name}>
+                    {c.name}: cotizado {money(c.precioCotizado)}, actual {money(c.precioActual)} (+{money(c.precioActual - c.precioCotizado)})
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-1.5 text-xs font-semibold text-text-primary">Total actualizado: {money(confirmacion.totalActual)}</p>
+              <div className="mt-2 flex gap-2">
+                <button type="button" onClick={() => exito(confirmacion.items, numero)} className="flex h-11 flex-1 items-center justify-center rounded-novey bg-novey-blue px-3 text-sm font-semibold text-white hover:bg-novey-blue-dark">
+                  Aceptar y agregar
+                </button>
+                <button type="button" onClick={cancelar} className="flex h-11 items-center justify-center rounded-novey border border-border-medium px-3 text-sm font-medium">
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          )}
+
+          {!confirmacion && (
+            <div className="mt-2 flex gap-2">
+              <button
+                type="submit"
+                disabled={valor.trim() === '' || procesando}
+                className="flex h-11 flex-1 items-center justify-center gap-2 rounded-novey bg-novey-blue px-3 text-sm font-semibold text-white transition-colors hover:bg-novey-blue-dark disabled:cursor-not-allowed disabled:bg-border-light disabled:text-text-disabled"
+              >
+                {procesando ? (
+                  <>
+                    <Spinner />
+                    Agregando…
+                  </>
+                ) : (
+                  'Agregar'
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={cancelar}
+                disabled={procesando}
+                className="flex h-11 items-center justify-center rounded-novey border border-border-medium px-3 text-sm font-medium text-text-secondary transition-colors hover:border-text-secondary disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Cancelar
+              </button>
+            </div>
+          )}
+        </form>
+      )}
+    </div>
+  );
+}
+
 export default function CartDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  // Espejo síncrono de `items`: las mutaciones parten de acá y no de un
+  // updater, porque escribir el storage dentro de un updater dispara
+  // `novey-cart-change` en pleno render y React reaplica el updater sobre el
+  // resultado ya combinado (cada cotización se sumaba dos veces).
+  const itemsRef = useRef<CartItem[]>([]);
   // Ids con una eliminación en curso: cada producto maneja su estado solo.
   const [quitando, setQuitando] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState<Toast | null>(null);
@@ -70,6 +356,7 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
   const antesRef = useRef<HTMLElement | null>(null);
   const deshacerRef = useRef<HTMLButtonElement>(null);
   const tituloVacioRef = useRef<HTMLParagraphElement>(null);
+  const cotizacionOkRef = useRef<HTMLDivElement>(null);
   // Número de serie del toast: los timers viejos comparan antes de tocar
   // nada, así una respuesta tardía no pisa un estado más nuevo.
   const serieToast = useRef(0);
@@ -91,7 +378,10 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
 
   // Se sincroniza con el storage al abrir y ante cualquier cambio del carrito.
   useEffect(() => {
-    const leer = () => setItems(readCart() ?? []);
+    const leer = () => {
+      itemsRef.current = readCart() ?? [];
+      setItems(itemsRef.current);
+    };
     leer();
     window.addEventListener('novey-cart-change', leer);
     window.addEventListener('storage', leer);
@@ -158,14 +448,19 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
     return serie;
   }, []);
 
+  /** Única puerta de mutación: espejo, estado y storage siempre juntos. */
+  const mutarItems = (next: CartItem[]) => {
+    itemsRef.current = next;
+    setItems(next);
+    writeCart(next);
+  };
+
   const cambiarQty = (id: string, delta: number) =>
-    setItems((prev) => {
-      const next = prev.map((it) =>
+    mutarItems(
+      itemsRef.current.map((it) =>
         it.id === id ? { ...it, qty: Math.max(1, it.qty + delta) } : it,
-      );
-      writeCart(next);
-      return next;
-    });
+      ),
+    );
 
   /** Paso 2 y 3 del flujo: "Quitando…" → lista sin el ítem + toast Deshacer. */
   const quitar = (id: string) => {
@@ -180,26 +475,23 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
       });
 
       const falla = typeof window !== 'undefined' && window.__noveySimularErrorCarrito === 'quitar';
-      setItems((prev) => {
-        const r = quitarItem(prev, id);
-        if (!r) return prev; // ya no estaba
-        if (falla) {
-          // La fuente de datos no se toca: el producto sigue en la lista.
-          publicarToast({ tipo: 'error-quitar', id, nombre: r.item.name });
-          return prev;
-        }
-        writeCart(r.restantes);
-        publicarToast(
-          { tipo: 'eliminado', recuerdo: { item: r.item, indice: r.indice }, restaurando: false },
-          TOAST_ELIMINADO_MS,
-        );
-        // Foco: a "Deshacer" (o al título del vacío, que llega por autoFocus
-        // del efecto de abajo cuando la lista queda en cero).
-        requestAnimationFrame(() => {
-          if (r.restantes.length > 0) deshacerRef.current?.focus();
-          else tituloVacioRef.current?.focus();
-        });
-        return r.restantes;
+      const r = quitarItem(itemsRef.current, id);
+      if (!r) return; // ya no estaba
+      if (falla) {
+        // La fuente de datos no se toca: el producto sigue en la lista.
+        publicarToast({ tipo: 'error-quitar', id, nombre: r.item.name });
+        return;
+      }
+      mutarItems(r.restantes);
+      publicarToast(
+        { tipo: 'eliminado', recuerdo: { item: r.item, indice: r.indice }, restaurando: false },
+        TOAST_ELIMINADO_MS,
+      );
+      // Foco: a "Deshacer" (o al título del vacío, que llega por autoFocus
+      // del efecto de abajo cuando la lista queda en cero).
+      requestAnimationFrame(() => {
+        if (r.restantes.length > 0) deshacerRef.current?.focus();
+        else tituloVacioRef.current?.focus();
       });
     }, LATENCIA_MS);
   };
@@ -215,11 +507,7 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
         publicarToast({ tipo: 'error-restaurar', recuerdo });
         return;
       }
-      setItems((prev) => {
-        const next = restaurarItem(prev, recuerdo);
-        writeCart(next);
-        return next;
-      });
+      mutarItems(restaurarItem(itemsRef.current, recuerdo));
       publicarToast({ tipo: 'restaurado', nombre: recuerdo.item.name }, TOAST_RESTAURADO_MS);
       requestAnimationFrame(() => {
         panelRef.current
@@ -229,13 +517,20 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
     }, LATENCIA_MS);
   };
 
+  /** Cotización resuelta: combina con el carrito (regla: sumar/fusionar). */
+  const aplicarCotizacion = (nuevos: CartItem[], numero: string) => {
+    mutarItems(combinarConCarrito(itemsRef.current, nuevos));
+    guardarAplicada(numero);
+    publicarToast(
+      { tipo: 'cotizacion-ok', texto: `Cotización ${numero} agregada correctamente.` },
+      TOAST_ELIMINADO_MS,
+    );
+    requestAnimationFrame(() => cotizacionOkRef.current?.focus());
+  };
+
   /** Paso 7: la alternativa cuando restaurar falló — como agregar de nuevo. */
   const volverAAgregarItem = (recuerdo: Recuerdo) => {
-    setItems((prev) => {
-      const next = volverAAgregar(prev, recuerdo.item);
-      writeCart(next);
-      return next;
-    });
+    mutarItems(volverAAgregar(itemsRef.current, recuerdo.item));
     publicarToast({ tipo: 'restaurado', nombre: recuerdo.item.name }, TOAST_RESTAURADO_MS);
   };
 
@@ -294,6 +589,9 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
             >
               Seguir comprando
             </button>
+            <div className="w-full max-w-[320px] text-left">
+              <CotizacionForm aplicar={aplicarCotizacion} />
+            </div>
           </div>
         ) : (
           <>
@@ -358,6 +656,8 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
               })}
             </ul>
 
+            <CotizacionForm aplicar={aplicarCotizacion} />
+
             <div className="border-t border-border-light p-4">
               <div className="flex items-baseline justify-between">
                 <span className="text-sm text-text-secondary">Subtotal</span>
@@ -414,6 +714,16 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
               >
                 ×
               </button>
+            </div>
+          )}
+
+          {toast?.tipo === 'cotizacion-ok' && (
+            <div
+              ref={cotizacionOkRef}
+              tabIndex={-1}
+              className="pointer-events-auto rounded-novey bg-text-ink px-4 py-3 text-sm text-white shadow-lg outline-none"
+            >
+              {toast.texto}
             </div>
           )}
 
