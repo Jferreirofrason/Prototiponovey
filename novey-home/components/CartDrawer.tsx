@@ -239,7 +239,7 @@ function CotizacionForm({
   const conError = aviso !== null && aviso.tipo !== 'ya-agregada';
 
   return (
-    <div className="border-t border-border-light px-4 py-2">
+    <div className="border-b border-border-light px-4 py-2">
       <button
         ref={disparadorRef}
         type="button"
@@ -927,6 +927,16 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
           </button>
         </div>
 
+        {/* La cotización va pegada al encabezado, solo con productos */}
+        {items.length > 0 && (
+          <CotizacionForm
+            aplicar={aplicarCotizacion}
+            exito={cotExito}
+            onCerrarExito={() => setCotExito(null)}
+            exitoRef={cotizacionOkRef}
+          />
+        )}
+
         {/* Mensaje general: lo que llegó desde otra sección */}
         <div aria-live="polite" className="empty:hidden">
           {avisoGeneral?.tipo === 'agregando' && (
@@ -1006,13 +1016,6 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
         ) : (
           <>
             <ul className="flex-1 divide-y divide-border-light overflow-y-auto">{filasProductos}</ul>
-
-            <CotizacionForm
-              aplicar={aplicarCotizacion}
-              exito={cotExito}
-              onCerrarExito={() => setCotExito(null)}
-              exitoRef={cotizacionOkRef}
-            />
 
             <div className="border-t border-border-light p-4">
               <div className="flex items-baseline justify-between">
