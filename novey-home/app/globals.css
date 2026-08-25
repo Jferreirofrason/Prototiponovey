@@ -179,3 +179,18 @@ a {
     scroll-behavior: auto !important;
   }
 }
+
+/* Mini carrito: destaca por un momento la fila del producto recién agregado,
+   para que se vea cuál cambió sin depender solo del mensaje. */
+.fila-destacada {
+  animation: fila-destacada 1.4s ease-out both;
+}
+@keyframes fila-destacada {
+  0%,
+  35% {
+    background-color: #eff6ff;
+  }
+  100% {
+    background-color: transparent;
+  }
+}

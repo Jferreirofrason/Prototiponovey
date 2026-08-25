@@ -1,15 +1,15 @@
 'use client';
 
 /**
- * Botón "Agregar al carrito" con confirmación propia: check + "Agregado",
- * miniatura que vuela hasta el ícono del carrito y toast. Deliberadamente
- * distinto del latido del corazón de favoritos.
+ * Botón "Agregar al carrito". No escribe el carrito por su cuenta: le pasa el
+ * producto al mini carrito (CART_ADD_EVENT) y lo abre (CART_OPEN_EVENT). Todo
+ * el feedback — "Agregando al carrito…", "Agregaste X al carrito." — vive
+ * dentro del drawer, cerca del producto, no en toasts sueltos.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef } from 'react';
 import { CartItem, readCart, writeCart } from '../lib/cart';
-import { showToast } from './ToastHost';
-import { ROUTES } from '../lib/routes';
+import { CART_ADD_EVENT, CART_OPEN_EVENT } from './CartDrawer';
 
 /** El ícono del carrito del header se marca con este atributo. */
 export const CART_ICON_ATTR = 'data-cart-icon';
@@ -68,36 +68,17 @@ export default function AddToCartButton({
   className?: string;
   children?: React.ReactNode;
 }) {
-  const [agregado, setAgregado] = useState(false);
   const ref = useRef<HTMLButtonElement>(null);
-  const timer = useRef<number>();
-
-  useEffect(() => () => window.clearTimeout(timer.current), []);
 
   const onClick = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      if (disabled) return; // agotado: ni se agrega ni se anima
+      if (disabled) return; // agotado: no hay nada que agregar
 
-      addItemsToCart([item]);
-
-      // La miniatura sale de la imagen de la card si la hay; si no, del botón.
-      const card = ref.current?.closest('article, li, div');
-      const origen = card?.querySelector<HTMLElement>('img') ?? ref.current;
-      flyToCart(origen, item.image);
-
-      setAgregado(true);
-      window.clearTimeout(timer.current);
-      timer.current = window.setTimeout(() => setAgregado(false), 1600);
-
-      showToast({
-        kind: 'carrito',
-        message: 'Producto agregado al carrito',
-        productName: item.name,
-        image: item.image,
-        action: { label: 'Ver carrito', href: ROUTES.carrito },
-      });
+      // El drawer hace el alta y muestra "Agregando al carrito…" adentro.
+      window.dispatchEvent(new CustomEvent(CART_ADD_EVENT, { detail: item }));
+      window.dispatchEvent(new CustomEvent(CART_OPEN_EVENT));
     },
     [item, disabled],
   );
@@ -111,21 +92,10 @@ export default function AddToCartButton({
       className={`inline-flex items-center justify-center gap-2 rounded-novey text-sm font-semibold transition-colors duration-200 ${
         disabled
           ? 'cursor-not-allowed bg-border-light text-text-disabled'
-          : agregado
-            ? 'bg-feedback-success-dark text-white'
-            : 'bg-novey-blue text-white hover:bg-novey-blue-dark'
+          : 'bg-novey-blue text-white hover:bg-novey-blue-dark'
       } ${full ? 'w-full' : ''} ${className}`}
     >
-      {agregado ? (
-        <>
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="m5 12 5 5L20 7" />
-          </svg>
-          Agregado
-        </>
-      ) : (
-        children
-      )}
+      {children}
     </button>
   );
 }

@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { CartItem, readCart, writeCart } from '../lib/cart';
-import { CART_OPEN_EVENT } from './CartDrawer';
+import { CartItem } from '../lib/cart';
+import { CART_ADD_EVENT, CART_OPEN_EVENT } from './CartDrawer';
 
 // Buscador con resultados sugeridos — Figma 5806:23781 ("Resultados sugeridos"):
 // término tipeado resaltado en amarillo, precio (oferta roja + tachado), botón
@@ -95,16 +95,9 @@ function addToCart(s: Suggestion) {
     qty: 1,
     image: s.image,
   };
-  // Suma al carrito en vez de reemplazarlo: si el producto ya estaba, sube la
-  // cantidad. Después se muestra el carrito para que se vea qué quedó adentro.
-  const actual = readCart() ?? [];
-  const existente = actual.find((it) => it.id === nuevo.id);
-  writeCart(
-    existente
-      ? actual.map((it) => (it.id === nuevo.id ? { ...it, qty: it.qty + 1 } : it))
-      : [...actual, nuevo],
-  );
-  // Se abre el mini carrito en vez de sacar al usuario de la página.
+  // El drawer hace el alta (suma si ya estaba) y muestra la confirmación
+  // adentro, cerca del producto: "Agregaste X" o "Sumaste una unidad más".
+  window.dispatchEvent(new CustomEvent(CART_ADD_EVENT, { detail: nuevo }));
   window.dispatchEvent(new CustomEvent(CART_OPEN_EVENT));
 }
 

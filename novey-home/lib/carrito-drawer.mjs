@@ -9,11 +9,54 @@
 /** Latencia simulada de las operaciones (la costura para la API real). */
 export const LATENCIA_MS = 250;
 
-/** Cuánto queda visible el toast con "Deshacer" (el brief pide 5–8 s). */
-export const TOAST_ELIMINADO_MS = 6000;
+/** Cuánto queda visible el mensaje con "Deshacer" (el brief pide 8–10 s). */
+export const MENSAJE_ELIMINADO_MS = 9000;
 
-/** Confirmación breve tras restaurar. */
-export const TOAST_RESTAURADO_MS = 2500;
+/** Confirmaciones informativas (cantidad nueva, producto restaurado). */
+export const MENSAJE_INFO_MS = 5000;
+
+/** Confirmaciones importantes (cotización agregada, producto agregado). */
+export const MENSAJE_EXITO_MS = 8000;
+
+/**
+ * Stock de demostración: el prototipo no tiene inventario real, así que todos
+ * los productos comparten este tope para poder mostrar el estado "solo hay N
+ * unidades disponibles". La costura para el stock real es `ajustarCantidad`.
+ */
+export const MAX_UNIDADES = 10;
+
+/**
+ * Regla de los botones +/− de una fila:
+ *  - sumar con el stock lleno → `sin-stock` (no es un error: no hay reintento)
+ *  - restar con una sola unidad → `ultima-unidad` (nunca se baja a cero solo;
+ *    para sacar el producto está "Quitar")
+ *  - si no, `ok` con la lista nueva y la cantidad confirmada
+ *
+ * @template {{ id: string, qty: number }} T
+ * @param {T[]} items
+ * @param {string} id
+ * @param {number} delta
+ * @returns {{ tipo: 'sin-stock', max: number } | { tipo: 'ultima-unidad' } | { tipo: 'ok', qty: number, items: T[] } | null}
+ */
+export function ajustarCantidad(items, id, delta) {
+  const item = items.find((it) => it.id === id);
+  if (!item) return null;
+  if (delta > 0 && item.qty >= MAX_UNIDADES) return { tipo: 'sin-stock', max: MAX_UNIDADES };
+  if (delta < 0 && item.qty <= 1) return { tipo: 'ultima-unidad' };
+  const qty = item.qty + delta;
+  return {
+    tipo: 'ok',
+    qty,
+    items: items.map((it) => (it.id === id ? { ...it, qty } : it)),
+  };
+}
+
+/** "Ahora tienes N unidades de este producto." (singular incluido). */
+export function textoCantidad(qty) {
+  return qty === 1
+    ? 'Ahora tienes 1 unidad de este producto.'
+    : `Ahora tienes ${qty} unidades de este producto.`;
+}
 
 /**
  * Quita un ítem y devuelve lo necesario para poder deshacerlo: el ítem con

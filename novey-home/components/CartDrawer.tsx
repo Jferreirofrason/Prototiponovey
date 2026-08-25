@@ -1,29 +1,40 @@
 'use client';
 
-// Mini carrito lateral: se abre desde el ícono del navbar (o al agregar algo
-// desde el buscador) y deja ver y ajustar el carrito sin salir de la página.
-// La página completa sigue existiendo en /carrito.
+// Mini carrito lateral: se abre desde el ícono del navbar o al agregar algo
+// desde cualquier sección. La página completa sigue existiendo en /carrito.
 //
-// Quitar un producto no pide confirmación: es inmediato y recuperable. La fila
-// pasa por "Quitando…" (sus controles se deshabilitan, el resto sigue vivo),
-// y al salir aparece un toast DENTRO del drawer con "Deshacer" durante unos
-// segundos. Si se quitó el último producto, el estado vacío convive con ese
-// toast. Errores de quitar/restaurar quedan en el drawer con su reintento.
-// Las mutaciones de lista viven en lib/carrito-drawer.mjs (probadas solas).
+// Todo el feedback vive DENTRO del drawer, cerca de lo que cambió, con
+// palabras de todos los días (pensado para personas con poca experiencia
+// tecnológica):
+//  - lo general (producto agregado desde otra sección) va debajo del
+//    encabezado, destacando la fila que cambió;
+//  - lo de cada producto (sumar, restar, quitar, errores) va debajo de esa
+//    fila, y cada fila maneja su estado sin bloquear al resto;
+//  - "Quitaste X del carrito" aparece EN el lugar donde estaba el producto,
+//    con Deshacer, durante 8–10 segundos;
+//  - lo de la cotización va debajo de su formulario.
+// No hay toasts flotantes, modales ni mensajes en el header.
 //
-// Gancho de desarrollo: window.__noveySimularErrorCarrito = 'quitar' |
-// 'restaurar' fuerza el camino de error para verificarlo visualmente.
+// Las reglas de lista y de cantidades viven en lib/carrito-drawer.mjs y las
+// de cotización en lib/cotizaciones.mjs (probadas sin montar React).
+//
+// Gancho de desarrollo: window.__noveySimularErrorCarrito =
+// 'quitar' | 'restaurar' | 'sumar' | 'restar' fuerza cada camino de error.
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ROUTES } from '../lib/routes';
 import ProductThumb from './ProductThumb';
+import AvisoInline, { AccionAviso } from './AvisoInline';
 import { CartItem, countUnits, readCart, subtotal, writeCart } from '../lib/cart';
 import {
   LATENCIA_MS,
-  TOAST_ELIMINADO_MS,
-  TOAST_RESTAURADO_MS,
+  MENSAJE_ELIMINADO_MS,
+  MENSAJE_EXITO_MS,
+  MENSAJE_INFO_MS,
+  ajustarCantidad,
   quitarItem,
   restaurarItem,
+  textoCantidad,
   volverAAgregar,
 } from '../lib/carrito-drawer.mjs';
 import {
@@ -38,18 +49,39 @@ const money = (n: number) => `$${n.toFixed(2)}`;
 /** Cualquier parte de la app puede pedir que se abra el mini carrito. */
 export const CART_OPEN_EVENT = 'novey-cart-open';
 
+/**
+ * Agregar un producto desde otra sección: se despacha este evento con el
+ * CartItem en `detail` y el drawer hace el alta (con su estado de carga y su
+ * confirmación adentro). Despachar también CART_OPEN_EVENT para abrirlo.
+ */
+export const CART_ADD_EVENT = 'novey-cart-agregar';
+
 /** Recuerdo de una eliminación, para poder deshacerla. */
 interface Recuerdo {
   item: CartItem;
   indice: number;
 }
 
-type Toast =
-  | { tipo: 'eliminado'; recuerdo: Recuerdo; restaurando: boolean }
-  | { tipo: 'restaurado'; nombre: string }
-  | { tipo: 'error-quitar'; id: string; nombre: string }
-  | { tipo: 'error-restaurar'; recuerdo: Recuerdo }
-  | { tipo: 'cotizacion-ok'; texto: string };
+/** Mensaje debajo de una fila. Uno solo por producto: el nuevo pisa al viejo. */
+type AvisoProducto =
+  | { tipo: 'sumando' }
+  | { tipo: 'restando' }
+  | { tipo: 'quitando' }
+  | { tipo: 'cantidad'; qty: number }
+  | { tipo: 'ultima-unidad' }
+  | { tipo: 'sin-stock'; max: number }
+  | { tipo: 'error-sumar' }
+  | { tipo: 'error-restar' }
+  | { tipo: 'error-quitar' }
+  | { tipo: 'restaurado' };
+
+/** El mensaje de "Quitaste X", en el lugar de la lista donde estaba X. */
+type Eliminado = { recuerdo: Recuerdo; fase: 'visible' | 'restaurando' | 'error' };
+
+/** Mensaje general debajo del encabezado (producto agregado desde afuera). */
+type AvisoGeneral =
+  | { tipo: 'agregando'; nombre: string }
+  | { tipo: 'agregado'; id: string; nombre: string; yaEstaba: boolean; qty: number };
 
 /** Números de cotización ya aplicados a este carrito (estado "ya agregada"). */
 const APLICADAS_KEY = 'novey-cotizaciones-aplicadas';
@@ -73,7 +105,7 @@ const WHATSAPP_SOPORTE = 'https://wa.me/50764336170';
 
 declare global {
   interface Window {
-    __noveySimularErrorCarrito?: 'quitar' | 'restaurar';
+    __noveySimularErrorCarrito?: 'quitar' | 'restaurar' | 'sumar' | 'restar';
   }
 }
 
@@ -85,7 +117,6 @@ function Spinner() {
     />
   );
 }
-
 
 /** Ícono de etiqueta/cotización. */
 function QuoteIcon({ className = '' }: { className?: string }) {
@@ -105,27 +136,45 @@ type AvisoCotizacion =
   | { tipo: 'ya-agregada' }
   | { tipo: 'error-red' };
 
-type ConfirmacionCotizacion =
-  | { tipo: 'parcial'; disponibles: CartItem[]; noDisponibles: string[] }
-  | { tipo: 'precios'; items: CartItem[]; cambios: { name: string; precioCotizado: number; precioActual: number }[]; totalCotizado: number; totalActual: number };
+interface ResumenCotizacion {
+  numero: string;
+  items: CartItem[];
+  total: number;
+  noDisponibles: string[];
+  preciosActualizados: { name: string; precioCotizado: number; precioActual: number }[];
+}
 
 /**
- * "Agregar una cotización": control expandible del drawer. Valida el formato,
- * resuelve la cotización (demo: COT-1001 ok, COT-4004 stock parcial, COT-5005
- * precios, COT-2002 vencida, COT-3003 ajena, COT-9999 error de red con
- * reintento) y delega en `aplicar` la combinación con el carrito. Nunca toca
- * el carrito por su cuenta ni cierra el drawer.
+ * "Agregar una cotización": control expandible del drawer, en dos pasos.
+ * Primero busca (demo: 1001 completa, 4004 con faltantes, 5005 con precios
+ * cambiados, 2002 vencida, 3003 de otra cuenta, 9999 error de conexión con
+ * reintento), muestra un resumen sencillo y recién al confirmar la agrega.
+ * El mensaje de éxito lo maneja el drawer (prop `exito`), así sobrevive al
+ * cambio de rama vacío/lleno. Nunca cierra el drawer.
  */
-function CotizacionForm({ aplicar }: { aplicar: (items: CartItem[], numero: string) => void }) {
+function CotizacionForm({
+  aplicar,
+  exito,
+  onCerrarExito,
+  exitoRef,
+}: {
+  aplicar: (items: CartItem[], numero: string) => void;
+  exito: string | null;
+  onCerrarExito: () => void;
+  exitoRef: React.RefObject<HTMLDivElement>;
+}) {
   const [abierto, setAbierto] = useState(false);
   const [valor, setValor] = useState('');
-  const [procesando, setProcesando] = useState(false);
+  const [fase, setFase] = useState<'campo' | 'buscando' | 'resumen' | 'agregando'>('campo');
   const [aviso, setAviso] = useState<AvisoCotizacion | null>(null);
-  const [confirmacion, setConfirmacion] = useState<ConfirmacionCotizacion | null>(null);
+  const [resumen, setResumen] = useState<ResumenCotizacion | null>(null);
 
   const disparadorRef = useRef<HTMLButtonElement>(null);
   const campoRef = useRef<HTMLInputElement>(null);
   const intentos = useRef<Map<string, number>>(new Map());
+  const timers = useRef<number[]>([]);
+
+  useEffect(() => () => timers.current.forEach((t) => window.clearTimeout(t)), []);
 
   useEffect(() => {
     if (abierto) campoRef.current?.focus();
@@ -134,8 +183,8 @@ function CotizacionForm({ aplicar }: { aplicar: (items: CartItem[], numero: stri
   const limpiar = () => {
     setValor('');
     setAviso(null);
-    setConfirmacion(null);
-    setProcesando(false);
+    setResumen(null);
+    setFase('campo');
   };
 
   const cancelar = () => {
@@ -144,15 +193,9 @@ function CotizacionForm({ aplicar }: { aplicar: (items: CartItem[], numero: stri
     disparadorRef.current?.focus();
   };
 
-  const exito = (items: CartItem[], numero: string) => {
-    aplicar(items, numero);
-    limpiar();
-    setAbierto(false);
-  };
-
-  const enviar = (e?: { preventDefault: () => void }) => {
+  const buscar = (e?: { preventDefault: () => void }) => {
     e?.preventDefault();
-    if (procesando) return; // sin envíos duplicados
+    if (fase === 'buscando' || fase === 'agregando') return; // sin envíos duplicados
     const numero = normalizarNumero(valor);
     if (!esFormatoValido(numero)) {
       setAviso({ tipo: 'validacion' });
@@ -160,27 +203,40 @@ function CotizacionForm({ aplicar }: { aplicar: (items: CartItem[], numero: stri
       return;
     }
     setAviso(null);
-    setConfirmacion(null);
-    setProcesando(true);
+    setResumen(null);
+    setFase('buscando');
     const intento = (intentos.current.get(numero) ?? 0) + 1;
     intentos.current.set(numero, intento);
 
-    window.setTimeout(() => {
-      setProcesando(false);
-      const r = resolverCotizacion(numero, { aplicadas: leerAplicadas(), intento });
-      if (r.tipo === 'ok') {
-        intentos.current.delete(numero);
-        exito(r.items as CartItem[], numero);
-      } else if (r.tipo === 'parcial' || r.tipo === 'precios') {
-        setConfirmacion(r as ConfirmacionCotizacion);
-      } else {
-        setAviso({ tipo: r.tipo } as AvisoCotizacion);
-      }
-    }, LATENCIA_MS);
+    timers.current.push(
+      window.setTimeout(() => {
+        const r = resolverCotizacion(numero, { aplicadas: leerAplicadas(), intento });
+        if (r.tipo === 'encontrada') {
+          intentos.current.delete(numero);
+          setFase('resumen');
+          setResumen({ numero, ...r } as ResumenCotizacion);
+        } else {
+          setFase('campo');
+          setAviso({ tipo: r.tipo } as AvisoCotizacion);
+        }
+      }, LATENCIA_MS),
+    );
   };
 
-  const numero = normalizarNumero(valor);
-  const conError = aviso !== null;
+  const confirmar = () => {
+    if (!resumen || fase === 'agregando') return;
+    setFase('agregando');
+    timers.current.push(
+      window.setTimeout(() => {
+        aplicar(resumen.items, resumen.numero);
+        limpiar();
+        setAbierto(false);
+      }, LATENCIA_MS),
+    );
+  };
+
+  const ocupado = fase === 'buscando' || fase === 'agregando';
+  const conError = aviso !== null && aviso.tipo !== 'ya-agregada';
 
   return (
     <div className="border-t border-border-light px-4 py-2">
@@ -198,136 +254,145 @@ function CotizacionForm({ aplicar }: { aplicar: (items: CartItem[], numero: stri
       </button>
 
       {abierto && (
-        <form id="form-cotizacion" onSubmit={enviar} className="pb-2">
+        <form id="form-cotizacion" onSubmit={buscar} className="pb-2">
           <label htmlFor="nro-cotizacion" className="text-xs font-medium text-text-secondary">
             Número de cotización
           </label>
+          <p id="cotizacion-ayuda" className="mt-0.5 text-xs text-text-tertiary">
+            Escribe el número que aparece en tu cotización.
+          </p>
           <input
             ref={campoRef}
             id="nro-cotizacion"
             type="text"
+            inputMode="numeric"
             value={valor}
             onChange={(e) => {
               setValor(e.target.value);
               if (aviso) setAviso(null);
             }}
-            placeholder="Ingresa el número de cotización"
-            disabled={procesando || confirmacion !== null}
+            placeholder="Ejemplo: 123456"
+            disabled={ocupado || fase === 'resumen'}
             aria-invalid={conError || undefined}
-            aria-describedby={conError ? 'cotizacion-aviso' : undefined}
-            className={`mt-1 h-11 w-full rounded-novey border px-3 text-sm outline-none transition-colors placeholder:text-text-tertiary focus:border-novey-blue disabled:bg-[#F9FAFB] disabled:text-text-tertiary ${
+            aria-describedby={`cotizacion-ayuda${aviso ? ' cotizacion-aviso' : ''}`}
+            className={`mt-1.5 h-11 w-full rounded-novey border px-3 text-sm outline-none transition-colors placeholder:text-text-tertiary focus:border-novey-blue disabled:bg-[#F9FAFB] disabled:text-text-tertiary ${
               conError ? 'border-feedback-error-dark' : 'border-border-medium'
             }`}
           />
 
-          {/* Avisos inline: siempre texto + acción, nunca solo color */}
-          <div id="cotizacion-aviso" aria-live="polite" className="text-sm">
+          {/* Mensajes del paso de búsqueda: siempre texto + acción */}
+          <div id="cotizacion-aviso" aria-live="polite" className="empty:hidden">
+            {fase === 'buscando' && (
+              <AvisoInline tipo="cargando" className="mt-2">Buscando tu cotización…</AvisoInline>
+            )}
             {aviso?.tipo === 'validacion' && (
-              <p className="mt-1.5 text-feedback-error-dark">
-                Número de cotización inválido. Revisa el número e intenta nuevamente.
-              </p>
+              <AvisoInline tipo="error" className="mt-2">
+                El número debe tener entre 4 y 6 dígitos. Revisa el número que aparece en tu cotización.
+              </AvisoInline>
             )}
             {aviso?.tipo === 'no-encontrada' && (
-              <p className="mt-1.5 text-feedback-error-dark">
-                No encontramos una cotización con ese número.{' '}
-                <button type="button" onClick={() => enviar()} className="min-h-11 font-semibold underline">
-                  Intentar nuevamente
-                </button>
-              </p>
+              <AvisoInline tipo="error" className="mt-2">
+                No encontramos una cotización con ese número.
+                <span className="mt-0.5 block text-xs">Revisa el número e intenta nuevamente.</span>
+              </AvisoInline>
             )}
             {aviso?.tipo === 'vencida' && (
-              <p className="mt-1.5 text-feedback-error-dark">
-                Esta cotización está vencida y no puede agregarse al carrito.{' '}
-                <a href={WHATSAPP_SOPORTE} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center font-semibold underline">
-                  Solicitar una nueva cotización
-                </a>
-              </p>
+              <AvisoInline
+                tipo="error"
+                className="mt-2"
+                acciones={<AccionAviso href={WHATSAPP_SOPORTE}>Solicitar una nueva cotización</AccionAviso>}
+              >
+                Esta cotización está vencida y ya no se puede usar.
+              </AvisoInline>
             )}
             {aviso?.tipo === 'ajena' && (
-              <p className="mt-1.5 text-feedback-error-dark">
-                No pudimos agregar esta cotización a tu carrito.{' '}
-                <a href={WHATSAPP_SOPORTE} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center font-semibold underline">
-                  Contactar con soporte
-                </a>
-              </p>
+              <AvisoInline
+                tipo="error"
+                className="mt-2"
+                acciones={<AccionAviso href={WHATSAPP_SOPORTE}>Contactar con soporte</AccionAviso>}
+              >
+                No pudimos agregar esta cotización a tu carrito.
+              </AvisoInline>
             )}
             {aviso?.tipo === 'ya-agregada' && (
-              <p className="mt-1.5 text-text-secondary">Esta cotización ya fue agregada al carrito.</p>
+              <AvisoInline tipo="info" className="mt-2">Esta cotización ya está en tu carrito.</AvisoInline>
             )}
             {aviso?.tipo === 'error-red' && (
-              <p className="mt-1.5 text-feedback-error-dark">
-                No pudimos agregar la cotización. Intenta nuevamente.{' '}
-                <button type="button" onClick={() => enviar()} className="min-h-11 font-semibold underline">
-                  Reintentar
-                </button>
-              </p>
+              <AvisoInline
+                tipo="error"
+                className="mt-2"
+                acciones={
+                  <>
+                    <AccionAviso onClick={() => buscar()}>Intentar nuevamente</AccionAviso>
+                    <AccionAviso onClick={cancelar}>Cancelar</AccionAviso>
+                  </>
+                }
+              >
+                No pudimos buscar la cotización.
+              </AvisoInline>
             )}
           </div>
 
-          {/* Confirmaciones inline (no modales): stock parcial y precios */}
-          {confirmacion?.tipo === 'parcial' && (
-            <div className="mt-2 rounded-novey border border-border-medium bg-[#F9FAFB] p-3 text-sm" aria-live="polite">
-              <p className="font-medium">Algunos productos ya no están disponibles. ¿Quieres agregar los productos restantes?</p>
-              <ul className="mt-1.5 list-inside list-disc text-xs text-text-tertiary">
-                {confirmacion.noDisponibles.map((n) => (
-                  <li key={n}>{n}</li>
-                ))}
-              </ul>
-              <p className="mt-1.5 text-xs text-text-secondary">
-                Se agregarán solo los {confirmacion.disponibles.length} productos disponibles.
-              </p>
-              <div className="mt-2 flex gap-2">
-                <button type="button" onClick={() => exito(confirmacion.disponibles, numero)} className="flex h-11 flex-1 items-center justify-center rounded-novey bg-novey-blue px-3 text-sm font-semibold text-white hover:bg-novey-blue-dark">
-                  Agregar disponibles
-                </button>
-                <button type="button" onClick={cancelar} className="flex h-11 items-center justify-center rounded-novey border border-border-medium px-3 text-sm font-medium">
-                  Cancelar
-                </button>
+          {/* Paso 2: resumen sencillo antes de tocar el carrito */}
+          {fase === 'resumen' && resumen && (
+            <div aria-live="polite">
+              <AvisoInline tipo="exito" className="mt-2">Encontramos tu cotización.</AvisoInline>
+              <div className="mt-2 rounded-novey border border-border-medium bg-[#F9FAFB] p-3 text-sm">
+                <p className="font-semibold">Cotización {resumen.numero}</p>
+                <p className="mt-1 text-text-secondary">
+                  {resumen.items.length} {resumen.items.length === 1 ? 'producto' : 'productos'} · Total {money(resumen.total)}
+                </p>
+                {resumen.noDisponibles.length > 0 && (
+                  <div className="mt-1.5 text-xs text-text-secondary">
+                    <p className="font-medium">Ya no está disponible y no se va a agregar:</p>
+                    <ul className="mt-0.5 list-inside list-disc">
+                      {resumen.noDisponibles.map((n) => (
+                        <li key={n}>{n}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {resumen.preciosActualizados.length > 0 && (
+                  <p className="mt-1.5 text-xs text-text-secondary">
+                    Algunos precios cambiaron desde que se hizo la cotización. El total ya muestra los precios de hoy.
+                  </p>
+                )}
+                <div className="mt-2.5 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={confirmar}
+                    className="flex h-11 flex-1 items-center justify-center rounded-novey bg-novey-blue px-3 text-sm font-semibold text-white hover:bg-novey-blue-dark"
+                  >
+                    Agregar al carrito
+                  </button>
+                  <button
+                    type="button"
+                    onClick={cancelar}
+                    className="flex h-11 items-center justify-center rounded-novey border border-border-medium px-3 text-sm font-medium"
+                  >
+                    Cancelar
+                  </button>
+                </div>
               </div>
             </div>
           )}
-          {confirmacion?.tipo === 'precios' && (
-            <div className="mt-2 rounded-novey border border-border-medium bg-[#F9FAFB] p-3 text-sm" aria-live="polite">
-              <p className="font-medium">Algunos precios cambiaron desde que se creó la cotización.</p>
-              <ul className="mt-1.5 space-y-1 text-xs text-text-secondary">
-                {confirmacion.cambios.map((c) => (
-                  <li key={c.name}>
-                    {c.name}: cotizado {money(c.precioCotizado)}, actual {money(c.precioActual)} (+{money(c.precioActual - c.precioCotizado)})
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-1.5 text-xs font-semibold text-text-primary">Total actualizado: {money(confirmacion.totalActual)}</p>
-              <div className="mt-2 flex gap-2">
-                <button type="button" onClick={() => exito(confirmacion.items, numero)} className="flex h-11 flex-1 items-center justify-center rounded-novey bg-novey-blue px-3 text-sm font-semibold text-white hover:bg-novey-blue-dark">
-                  Aceptar y agregar
-                </button>
-                <button type="button" onClick={cancelar} className="flex h-11 items-center justify-center rounded-novey border border-border-medium px-3 text-sm font-medium">
-                  Cancelar
-                </button>
-              </div>
-            </div>
+          {fase === 'agregando' && (
+            <AvisoInline tipo="cargando" className="mt-2">Agregando los productos de tu cotización…</AvisoInline>
           )}
 
-          {!confirmacion && (
+          {(fase === 'campo' || fase === 'buscando') && (
             <div className="mt-2 flex gap-2">
               <button
                 type="submit"
-                disabled={valor.trim() === '' || procesando}
+                disabled={valor.trim() === '' || ocupado}
                 className="flex h-11 flex-1 items-center justify-center gap-2 rounded-novey bg-novey-blue px-3 text-sm font-semibold text-white transition-colors hover:bg-novey-blue-dark disabled:cursor-not-allowed disabled:bg-border-light disabled:text-text-disabled"
               >
-                {procesando ? (
-                  <>
-                    <Spinner />
-                    Agregando…
-                  </>
-                ) : (
-                  'Agregar'
-                )}
+                Agregar
               </button>
               <button
                 type="button"
                 onClick={cancelar}
-                disabled={procesando}
+                disabled={ocupado}
                 className="flex h-11 items-center justify-center rounded-novey border border-border-medium px-3 text-sm font-medium text-text-secondary transition-colors hover:border-text-secondary disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Cancelar
@@ -336,6 +401,15 @@ function CotizacionForm({ aplicar }: { aplicar: (items: CartItem[], numero: stri
           )}
         </form>
       )}
+
+      {/* El éxito sobrevive al colapso del formulario y al cambio de rama */}
+      <div aria-live="polite" className="empty:hidden">
+        {exito && (
+          <AvisoInline ref={exitoRef} tipo="exito" className="mb-1 mt-1" onCerrar={onCerrarExito}>
+            Agregamos los productos de la cotización {exito} a tu carrito.
+          </AvisoInline>
+        )}
+      </div>
     </div>
   );
 }
@@ -347,9 +421,14 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
   // `novey-cart-change` en pleno render y React reaplica el updater sobre el
   // resultado ya combinado (cada cotización se sumaba dos veces).
   const itemsRef = useRef<CartItem[]>([]);
-  // Ids con una eliminación en curso: cada producto maneja su estado solo.
-  const [quitando, setQuitando] = useState<Set<string>>(new Set());
-  const [toast, setToast] = useState<Toast | null>(null);
+
+  // Un mensaje por producto (el nuevo reemplaza al anterior) y el mensaje de
+  // eliminación, que ocupa el lugar de la fila quitada.
+  const [avisos, setAvisos] = useState<Map<string, AvisoProducto>>(new Map());
+  const [eliminado, setEliminado] = useState<Eliminado | null>(null);
+  const [avisoGeneral, setAvisoGeneral] = useState<AvisoGeneral | null>(null);
+  const [cotExito, setCotExito] = useState<string | null>(null);
+  const [destacado, setDestacado] = useState<string | null>(null);
 
   const panelRef = useRef<HTMLDivElement>(null);
   const cerrarRef = useRef<HTMLButtonElement>(null);
@@ -357,9 +436,12 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
   const deshacerRef = useRef<HTMLButtonElement>(null);
   const tituloVacioRef = useRef<HTMLParagraphElement>(null);
   const cotizacionOkRef = useRef<HTMLDivElement>(null);
-  // Número de serie del toast: los timers viejos comparan antes de tocar
-  // nada, así una respuesta tardía no pisa un estado más nuevo.
-  const serieToast = useRef(0);
+  // Números de serie por mensaje: un timer viejo compara antes de borrar,
+  // así una respuesta tardía no pisa un estado más nuevo.
+  const seriesAviso = useRef<Map<string, number>>(new Map());
+  const serieEliminado = useRef(0);
+  const serieGeneral = useRef(0);
+  const serieCotExito = useRef(0);
   const timers = useRef<number[]>([]);
 
   // `montado` mantiene el panel en el DOM mientras corre la animación de
@@ -434,20 +516,6 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
     timers.current.push(window.setTimeout(fn, ms));
   };
 
-  /** Publica un toast y agenda su cierre; el número de serie evita pisadas. */
-  const publicarToast = useCallback((t: Toast, ms?: number) => {
-    const serie = ++serieToast.current;
-    setToast(t);
-    if (ms) {
-      timers.current.push(
-        window.setTimeout(() => {
-          if (serieToast.current === serie) setToast(null);
-        }, ms),
-      );
-    }
-    return serie;
-  }, []);
-
   /** Única puerta de mutación: espejo, estado y storage siempre juntos. */
   const mutarItems = (next: CartItem[]) => {
     itemsRef.current = next;
@@ -455,40 +523,110 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
     writeCart(next);
   };
 
-  const cambiarQty = (id: string, delta: number) =>
-    mutarItems(
-      itemsRef.current.map((it) =>
-        it.id === id ? { ...it, qty: Math.max(1, it.qty + delta) } : it,
-      ),
-    );
+  /**
+   * Pone (o reemplaza) el mensaje de un producto; con `ms` se borra solo.
+   * Cada producto lleva su propia serie: no se pisan entre sí.
+   */
+  const ponerAviso = (id: string, aviso: AvisoProducto | null, ms?: number) => {
+    const serie = (seriesAviso.current.get(id) ?? 0) + 1;
+    seriesAviso.current.set(id, serie);
+    setAvisos((prev) => {
+      const next = new Map(prev);
+      if (aviso) next.set(id, aviso);
+      else next.delete(id);
+      return next;
+    });
+    if (aviso && ms) {
+      programar(() => {
+        if (seriesAviso.current.get(id) === serie) ponerAviso(id, null);
+      }, ms);
+    }
+  };
 
-  /** Paso 2 y 3 del flujo: "Quitando…" → lista sin el ítem + toast Deshacer. */
-  const quitar = (id: string) => {
-    if (quitando.has(id)) return; // sin operaciones duplicadas
-    setQuitando((prev) => new Set(prev).add(id));
+  const ocupado = (id: string) => {
+    const a = avisos.get(id);
+    return a?.tipo === 'sumando' || a?.tipo === 'restando' || a?.tipo === 'quitando';
+  };
 
+  /** "+": valida el tope, muestra "Sumando…" y confirma la cantidad nueva. */
+  const sumar = (id: string) => {
+    if (ocupado(id)) return;
+    const regla = ajustarCantidad(itemsRef.current, id, 1);
+    if (!regla) return;
+    if (regla.tipo === 'sin-stock') {
+      ponerAviso(id, { tipo: 'sin-stock', max: regla.max });
+      return;
+    }
+    ponerAviso(id, { tipo: 'sumando' });
     programar(() => {
-      setQuitando((prev) => {
-        const next = new Set(prev);
-        next.delete(id);
-        return next;
-      });
-
-      const falla = typeof window !== 'undefined' && window.__noveySimularErrorCarrito === 'quitar';
-      const r = quitarItem(itemsRef.current, id);
-      if (!r) return; // ya no estaba
-      if (falla) {
-        // La fuente de datos no se toca: el producto sigue en la lista.
-        publicarToast({ tipo: 'error-quitar', id, nombre: r.item.name });
+      if (window.__noveySimularErrorCarrito === 'sumar') {
+        ponerAviso(id, { tipo: 'error-sumar' });
         return;
       }
+      const r = ajustarCantidad(itemsRef.current, id, 1);
+      if (r?.tipo !== 'ok') {
+        ponerAviso(id, null);
+        return;
+      }
+      mutarItems(r.items);
+      ponerAviso(id, { tipo: 'cantidad', qty: r.qty }, MENSAJE_INFO_MS);
+    }, LATENCIA_MS);
+  };
+
+  /** "−": nunca baja a cero solo; con una unidad explica que existe "Quitar". */
+  const restar = (id: string) => {
+    if (ocupado(id)) return;
+    const regla = ajustarCantidad(itemsRef.current, id, -1);
+    if (!regla) return;
+    if (regla.tipo === 'ultima-unidad') {
+      ponerAviso(id, { tipo: 'ultima-unidad' });
+      return;
+    }
+    ponerAviso(id, { tipo: 'restando' });
+    programar(() => {
+      if (window.__noveySimularErrorCarrito === 'restar') {
+        ponerAviso(id, { tipo: 'error-restar' });
+        return;
+      }
+      const r = ajustarCantidad(itemsRef.current, id, -1);
+      if (r?.tipo !== 'ok') {
+        ponerAviso(id, null);
+        return;
+      }
+      mutarItems(r.items);
+      ponerAviso(id, { tipo: 'cantidad', qty: r.qty }, MENSAJE_INFO_MS);
+    }, LATENCIA_MS);
+  };
+
+  /** "Quitar": la fila queda en "Quitando…" y al salir aparece el Deshacer. */
+  const quitar = (id: string) => {
+    if (ocupado(id)) return;
+    const item = itemsRef.current.find((it) => it.id === id);
+    if (!item) return;
+    ponerAviso(id, { tipo: 'quitando' });
+
+    programar(() => {
+      if (window.__noveySimularErrorCarrito === 'quitar') {
+        // La fuente de datos no se toca: el producto sigue en la lista.
+        ponerAviso(id, { tipo: 'error-quitar' });
+        return;
+      }
+      const r = quitarItem(itemsRef.current, id);
+      if (!r) {
+        ponerAviso(id, null);
+        return;
+      }
+      ponerAviso(id, null);
       mutarItems(r.restantes);
-      publicarToast(
-        { tipo: 'eliminado', recuerdo: { item: r.item, indice: r.indice }, restaurando: false },
-        TOAST_ELIMINADO_MS,
-      );
-      // Foco: a "Deshacer" (o al título del vacío, que llega por autoFocus
-      // del efecto de abajo cuando la lista queda en cero).
+      const serie = ++serieEliminado.current;
+      setEliminado({ recuerdo: { item: r.item, indice: r.indice }, fase: 'visible' });
+      programar(() => {
+        // Solo se va solo mientras nadie lo esté usando (deshacer/error quedan).
+        if (serieEliminado.current === serie) {
+          setEliminado((e) => (e && e.fase === 'visible' ? null : e));
+        }
+      }, MENSAJE_ELIMINADO_MS);
+      // Foco: a "Deshacer" (o al título del vacío si no quedó nada).
       requestAnimationFrame(() => {
         if (r.restantes.length > 0) deshacerRef.current?.focus();
         else tituloVacioRef.current?.focus();
@@ -496,19 +634,21 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
     }, LATENCIA_MS);
   };
 
-  /** Paso 5: "Restaurando…" → producto de vuelta en su posición original. */
-  const deshacer = (recuerdo: Recuerdo) => {
-    setToast((t) => (t && t.tipo === 'eliminado' ? { ...t, restaurando: true } : t));
+  /** "Deshacer": el producto vuelve con su cantidad a su posición original. */
+  const deshacer = () => {
+    const recuerdo = eliminado?.recuerdo;
+    if (!recuerdo || eliminado?.fase === 'restaurando') return;
+    serieEliminado.current += 1;
+    setEliminado({ recuerdo, fase: 'restaurando' });
 
     programar(() => {
-      const falla =
-        typeof window !== 'undefined' && window.__noveySimularErrorCarrito === 'restaurar';
-      if (falla) {
-        publicarToast({ tipo: 'error-restaurar', recuerdo });
+      if (window.__noveySimularErrorCarrito === 'restaurar') {
+        setEliminado({ recuerdo, fase: 'error' });
         return;
       }
       mutarItems(restaurarItem(itemsRef.current, recuerdo));
-      publicarToast({ tipo: 'restaurado', nombre: recuerdo.item.name }, TOAST_RESTAURADO_MS);
+      setEliminado(null);
+      ponerAviso(recuerdo.item.id, { tipo: 'restaurado' }, MENSAJE_INFO_MS);
       requestAnimationFrame(() => {
         panelRef.current
           ?.querySelector<HTMLButtonElement>(`[data-quitar="${recuerdo.item.id}"]`)
@@ -517,26 +657,235 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
     }, LATENCIA_MS);
   };
 
-  /** Cotización resuelta: combina con el carrito (regla: sumar/fusionar). */
+  /** La salida del error de deshacer: como agregarlo de nuevo, al final. */
+  const volverAAgregarItem = () => {
+    const recuerdo = eliminado?.recuerdo;
+    if (!recuerdo) return;
+    serieEliminado.current += 1;
+    mutarItems(volverAAgregar(itemsRef.current, recuerdo.item));
+    setEliminado(null);
+    ponerAviso(recuerdo.item.id, { tipo: 'restaurado' }, MENSAJE_INFO_MS);
+  };
+
+  /** Cotización confirmada: combina con el carrito (regla: sumar/fusionar). */
   const aplicarCotizacion = (nuevos: CartItem[], numero: string) => {
     mutarItems(combinarConCarrito(itemsRef.current, nuevos));
     guardarAplicada(numero);
-    publicarToast(
-      { tipo: 'cotizacion-ok', texto: `Cotización ${numero} agregada correctamente.` },
-      TOAST_ELIMINADO_MS,
-    );
+    const serie = ++serieCotExito.current;
+    setCotExito(numero);
+    programar(() => {
+      if (serieCotExito.current === serie) setCotExito(null);
+    }, MENSAJE_EXITO_MS);
     requestAnimationFrame(() => cotizacionOkRef.current?.focus());
   };
 
-  /** Paso 7: la alternativa cuando restaurar falló — como agregar de nuevo. */
-  const volverAAgregarItem = (recuerdo: Recuerdo) => {
-    mutarItems(volverAAgregar(itemsRef.current, recuerdo.item));
-    publicarToast({ tipo: 'restaurado', nombre: recuerdo.item.name }, TOAST_RESTAURADO_MS);
+  /** Lleva la vista a una fila y la destaca un momento. */
+  const mostrarFila = (id: string) => {
+    setDestacado(null);
+    requestAnimationFrame(() => {
+      panelRef.current?.querySelector(`[data-fila="${id}"]`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      setDestacado(id);
+      programar(() => setDestacado((d) => (d === id ? null : d)), 1500);
+    });
   };
+
+  // Alta desde otra sección (evento CART_ADD_EVENT): el drawer hace el
+  // agregado con su carga y su confirmación, y destaca la fila que cambió.
+  useEffect(() => {
+    const alta = (e: Event) => {
+      const item = (e as CustomEvent<CartItem>).detail;
+      if (!item?.id) return;
+      const serie = ++serieGeneral.current;
+      setAvisoGeneral({ tipo: 'agregando', nombre: item.name });
+      programar(() => {
+        const existente = itemsRef.current.find((it) => it.id === item.id);
+        const qty = (existente?.qty ?? 0) + item.qty;
+        mutarItems(
+          existente
+            ? itemsRef.current.map((it) => (it.id === item.id ? { ...it, qty } : it))
+            : [...itemsRef.current, { ...item }],
+        );
+        setAvisoGeneral({ tipo: 'agregado', id: item.id, nombre: item.name, yaEstaba: !!existente, qty });
+        mostrarFila(item.id);
+        programar(() => {
+          if (serieGeneral.current === serie) setAvisoGeneral((a) => (a?.tipo === 'agregado' ? null : a));
+        }, MENSAJE_EXITO_MS);
+      }, LATENCIA_MS);
+    };
+    window.addEventListener(CART_ADD_EVENT, alta);
+    return () => window.removeEventListener(CART_ADD_EVENT, alta);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const unidades = countUnits(items);
 
   if (!montado) return null;
+
+  /** El mensaje debajo de una fila, según su estado. */
+  const avisoDeFila = (it: CartItem) => {
+    const a = avisos.get(it.id);
+    if (!a) return null;
+    switch (a.tipo) {
+      case 'sumando':
+        return <AvisoInline tipo="cargando">Sumando una unidad…</AvisoInline>;
+      case 'restando':
+        return <AvisoInline tipo="cargando">Quitando una unidad…</AvisoInline>;
+      case 'quitando':
+        return <AvisoInline tipo="cargando">Quitando {it.name}…</AvisoInline>;
+      case 'cantidad':
+        return <AvisoInline tipo="exito">{textoCantidad(a.qty)}</AvisoInline>;
+      case 'restaurado':
+        return <AvisoInline tipo="exito">{it.name} volvió a tu carrito.</AvisoInline>;
+      case 'ultima-unidad':
+        return (
+          <AvisoInline tipo="advertencia" onCerrar={() => ponerAviso(it.id, null)}>
+            Esta es la última unidad. Para sacarla del carrito, selecciona “Quitar”.
+          </AvisoInline>
+        );
+      case 'sin-stock':
+        return (
+          <AvisoInline tipo="advertencia" onCerrar={() => ponerAviso(it.id, null)}>
+            Solo hay {a.max} unidades disponibles.
+          </AvisoInline>
+        );
+      case 'error-sumar':
+        return (
+          <AvisoInline
+            tipo="error"
+            onCerrar={() => ponerAviso(it.id, null)}
+            acciones={<AccionAviso onClick={() => { ponerAviso(it.id, null); sumar(it.id); }}>Intentar nuevamente</AccionAviso>}
+          >
+            No pudimos sumar otra unidad.
+          </AvisoInline>
+        );
+      case 'error-restar':
+        return (
+          <AvisoInline
+            tipo="error"
+            onCerrar={() => ponerAviso(it.id, null)}
+            acciones={<AccionAviso onClick={() => { ponerAviso(it.id, null); restar(it.id); }}>Intentar nuevamente</AccionAviso>}
+          >
+            No pudimos cambiar la cantidad.
+          </AvisoInline>
+        );
+      case 'error-quitar':
+        return (
+          <AvisoInline
+            tipo="error"
+            onCerrar={() => ponerAviso(it.id, null)}
+            acciones={<AccionAviso onClick={() => { ponerAviso(it.id, null); quitar(it.id); }}>Intentar nuevamente</AccionAviso>}
+          >
+            No pudimos quitar {it.name} del carrito.
+          </AvisoInline>
+        );
+    }
+  };
+
+  /** La fila-mensaje de "Quitaste X", en el lugar donde estaba el producto. */
+  const filaEliminado = eliminado && (
+    <li key="__eliminado" className="p-3">
+      {eliminado.fase === 'visible' && (
+        <AvisoInline
+          tipo="info"
+          onCerrar={() => setEliminado(null)}
+          acciones={
+            <button
+              ref={deshacerRef}
+              type="button"
+              onClick={deshacer}
+              className="inline-flex min-h-11 items-center text-sm font-semibold underline"
+            >
+              Deshacer
+            </button>
+          }
+        >
+          Quitaste {eliminado.recuerdo.item.name} del carrito.
+        </AvisoInline>
+      )}
+      {eliminado.fase === 'restaurando' && (
+        <AvisoInline tipo="cargando">Volviendo a agregar el producto…</AvisoInline>
+      )}
+      {eliminado.fase === 'error' && (
+        <AvisoInline
+          tipo="error"
+          onCerrar={() => setEliminado(null)}
+          acciones={
+            <>
+              <AccionAviso onClick={deshacer}>Intentar nuevamente</AccionAviso>
+              <AccionAviso onClick={volverAAgregarItem}>Volver a agregar al final</AccionAviso>
+              <AccionAviso href={ROUTES.producto}>Buscar el producto</AccionAviso>
+            </>
+          }
+        >
+          No pudimos volver a agregar el producto.
+        </AvisoInline>
+      )}
+    </li>
+  );
+
+  // La lista con el mensaje de eliminación insertado donde estaba el producto.
+  const filasProductos = items.map((it) => {
+    const enProceso = ocupado(it.id);
+    return (
+      <li
+        key={it.id}
+        data-fila={it.id}
+        className={`p-4 ${destacado === it.id ? 'fila-destacada' : ''}`}
+      >
+        <div className="flex gap-3">
+          <ProductThumb src={it.image} alt={it.name} className="h-16 w-16" />
+          <div className="min-w-0 flex-1">
+            <p className="line-clamp-2 text-sm font-medium leading-snug text-gray-900">{it.name}</p>
+            <p className="mt-0.5 text-xs text-gray-500">{money(it.price)} c/u</p>
+            <div className="mt-2 flex items-center gap-2">
+              <div
+                className={`flex items-center rounded-novey border border-border-medium ${
+                  enProceso ? 'opacity-50' : ''
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => restar(it.id)}
+                  disabled={enProceso}
+                  aria-label={`Quitar una unidad de ${it.name}`}
+                  className="grid h-11 w-9 place-items-center leading-none text-text-secondary transition-colors hover:text-novey-blue disabled:cursor-not-allowed disabled:text-text-disabled"
+                >
+                  −
+                </button>
+                <span className="min-w-[2rem] text-center text-sm font-semibold">{it.qty}</span>
+                <button
+                  type="button"
+                  onClick={() => sumar(it.id)}
+                  disabled={enProceso}
+                  aria-label={`Agregar una unidad de ${it.name}`}
+                  className="grid h-11 w-9 place-items-center leading-none text-text-secondary transition-colors hover:text-novey-blue disabled:cursor-not-allowed disabled:text-text-disabled"
+                >
+                  +
+                </button>
+              </div>
+              <button
+                type="button"
+                data-quitar={it.id}
+                onClick={() => quitar(it.id)}
+                disabled={enProceso}
+                className="flex min-h-11 items-center px-1 text-xs font-medium text-feedback-error-dark hover:underline disabled:cursor-wait disabled:no-underline disabled:opacity-70"
+              >
+                Quitar
+              </button>
+            </div>
+          </div>
+          <p className="whitespace-nowrap text-sm font-semibold">{money(it.price * it.qty)}</p>
+        </div>
+        {/* El mensaje de ESTE producto, pegado a su fila */}
+        <div aria-live="polite" className="mt-2 empty:hidden">
+          {avisoDeFila(it)}
+        </div>
+      </li>
+    );
+  });
+  if (filaEliminado && items.length > 0) {
+    filasProductos.splice(Math.min(eliminado!.recuerdo.indice, items.length), 0, filaEliminado);
+  }
 
   return (
     <>
@@ -576,87 +925,97 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
           </button>
         </div>
 
+        {/* Mensaje general: lo que llegó desde otra sección */}
+        <div aria-live="polite" className="empty:hidden">
+          {avisoGeneral?.tipo === 'agregando' && (
+            <AvisoInline tipo="cargando" className="mx-4 mt-3">Agregando al carrito…</AvisoInline>
+          )}
+          {avisoGeneral?.tipo === 'agregado' && (
+            <AvisoInline
+              tipo="exito"
+              className="mx-4 mt-3"
+              onCerrar={() => setAvisoGeneral(null)}
+              acciones={<AccionAviso onClick={() => mostrarFila(avisoGeneral.id)}>Ver producto en el carrito</AccionAviso>}
+            >
+              {avisoGeneral.yaEstaba
+                ? `Sumaste una unidad más de ${avisoGeneral.nombre}. Ahora tienes ${avisoGeneral.qty}.`
+                : `Agregaste ${avisoGeneral.nombre} al carrito.`}
+            </AvisoInline>
+          )}
+        </div>
+
         {items.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
             <p ref={tituloVacioRef} tabIndex={-1} className="text-base font-semibold text-gray-900 outline-none">
               Tu carrito está vacío
             </p>
-            <p className="text-sm text-gray-500">Agrega productos y vuelve para completar tu compra.</p>
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex h-11 items-center justify-center rounded-novey bg-novey-blue px-6 text-sm font-semibold text-white transition-colors hover:bg-novey-blue-dark"
-            >
-              Seguir comprando
-            </button>
+            {/* Si acaba de quitar el último producto, el vacío lo explica */}
+            {eliminado ? (
+              <div className="w-full max-w-[320px] text-left" aria-live="polite">
+                {eliminado.fase === 'visible' && (
+                  <AvisoInline tipo="info">
+                    Quitaste {eliminado.recuerdo.item.name}. Puedes volver a agregarlo o seguir comprando.
+                  </AvisoInline>
+                )}
+                {eliminado.fase === 'restaurando' && (
+                  <AvisoInline tipo="cargando">Volviendo a agregar el producto…</AvisoInline>
+                )}
+                {eliminado.fase === 'error' && (
+                  <AvisoInline
+                    tipo="error"
+                    onCerrar={() => setEliminado(null)}
+                    acciones={
+                      <>
+                        <AccionAviso onClick={deshacer}>Intentar nuevamente</AccionAviso>
+                        <AccionAviso href={ROUTES.producto}>Buscar el producto</AccionAviso>
+                      </>
+                    }
+                  >
+                    No pudimos volver a agregar el producto.
+                  </AvisoInline>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">Agrega productos y vuelve para completar tu compra.</p>
+            )}
+            <div className="flex w-full max-w-[320px] flex-col gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex h-11 items-center justify-center rounded-novey bg-novey-blue px-6 text-sm font-semibold text-white transition-colors hover:bg-novey-blue-dark"
+              >
+                Seguir comprando
+              </button>
+              {eliminado?.fase === 'visible' && (
+                <button
+                  ref={deshacerRef}
+                  type="button"
+                  onClick={deshacer}
+                  className="flex h-11 items-center justify-center rounded-novey border border-novey-blue bg-white px-6 text-sm font-semibold text-novey-blue transition-colors hover:bg-novey-blue-bg"
+                >
+                  Deshacer
+                </button>
+              )}
+            </div>
             <div className="w-full max-w-[320px] text-left">
-              <CotizacionForm aplicar={aplicarCotizacion} />
+              <CotizacionForm
+                aplicar={aplicarCotizacion}
+                exito={cotExito}
+                onCerrarExito={() => setCotExito(null)}
+                exitoRef={cotizacionOkRef}
+              />
             </div>
           </div>
         ) : (
           <>
-            <ul className="flex-1 divide-y divide-border-light overflow-y-auto">
-              {items.map((it) => {
-                const enProceso = quitando.has(it.id);
-                return (
-                  <li key={it.id} className="flex gap-3 p-4">
-                    <ProductThumb src={it.image} alt={it.name} className="h-16 w-16" />
-                    <div className="min-w-0 flex-1">
-                      <p className="line-clamp-2 text-sm font-medium leading-snug text-gray-900">{it.name}</p>
-                      <p className="mt-0.5 text-xs text-gray-500">{money(it.price)} c/u</p>
-                      <div className="mt-2 flex items-center gap-2">
-                        <div
-                          className={`flex items-center rounded-novey border border-border-medium ${
-                            enProceso ? 'opacity-50' : ''
-                          }`}
-                        >
-                          <button
-                            type="button"
-                            onClick={() => cambiarQty(it.id, -1)}
-                            disabled={enProceso || it.qty <= 1}
-                            aria-label={`Quitar una unidad de ${it.name}`}
-                            className="grid h-11 w-9 place-items-center leading-none text-text-secondary transition-colors hover:text-novey-blue disabled:cursor-not-allowed disabled:text-text-disabled"
-                          >
-                            −
-                          </button>
-                          <span aria-live="polite" className="min-w-[2rem] text-center text-sm font-semibold">
-                            {it.qty}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => cambiarQty(it.id, 1)}
-                            disabled={enProceso}
-                            aria-label={`Agregar una unidad de ${it.name}`}
-                            className="grid h-11 w-9 place-items-center leading-none text-text-secondary transition-colors hover:text-novey-blue disabled:cursor-not-allowed disabled:text-text-disabled"
-                          >
-                            +
-                          </button>
-                        </div>
-                        <button
-                          type="button"
-                          data-quitar={it.id}
-                          onClick={() => quitar(it.id)}
-                          disabled={enProceso}
-                          className="flex min-h-11 min-w-[76px] items-center gap-1.5 px-1 text-xs font-medium text-feedback-error-dark hover:underline disabled:cursor-wait disabled:no-underline disabled:opacity-70"
-                        >
-                          {enProceso ? (
-                            <>
-                              <Spinner />
-                              Quitando…
-                            </>
-                          ) : (
-                            `Quitar`
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                    <p className="whitespace-nowrap text-sm font-semibold">{money(it.price * it.qty)}</p>
-                  </li>
-                );
-              })}
-            </ul>
+            <ul className="flex-1 divide-y divide-border-light overflow-y-auto">{filasProductos}</ul>
 
-            <CotizacionForm aplicar={aplicarCotizacion} />
+            <CotizacionForm
+              aplicar={aplicarCotizacion}
+              exito={cotExito}
+              onCerrarExito={() => setCotExito(null)}
+              exitoRef={cotizacionOkRef}
+            />
 
             <div className="border-t border-border-light p-4">
               <div className="flex items-baseline justify-between">
@@ -681,103 +1040,6 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
             </div>
           </>
         )}
-
-        {/* Toast del drawer: eliminación, restauración y errores. Vive sobre
-            el contenido (overlay) para no mover el layout, también con el
-            carrito vacío. aria-live anuncia cada cambio de estado. */}
-        <div aria-live="polite" className="pointer-events-none absolute inset-x-3 bottom-3 z-10">
-          {toast?.tipo === 'eliminado' && (
-            <div className="pointer-events-auto flex items-center gap-2 rounded-novey bg-text-ink px-4 py-2.5 text-sm text-white shadow-lg">
-              <span className="min-w-0 flex-1 truncate">Producto eliminado del carrito</span>
-              <button
-                ref={deshacerRef}
-                type="button"
-                disabled={toast.restaurando}
-                onClick={() => deshacer(toast.recuerdo)}
-                className="flex min-h-11 items-center gap-1.5 px-2 font-semibold text-[#8ABAF7] hover:underline disabled:cursor-wait disabled:no-underline disabled:opacity-80"
-              >
-                {toast.restaurando ? (
-                  <>
-                    <Spinner />
-                    Restaurando…
-                  </>
-                ) : (
-                  'Deshacer'
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => setToast(null)}
-                disabled={toast.restaurando}
-                aria-label="Cerrar el mensaje"
-                className="grid h-11 w-9 place-items-center text-lg leading-none text-white/70 hover:text-white"
-              >
-                ×
-              </button>
-            </div>
-          )}
-
-          {toast?.tipo === 'cotizacion-ok' && (
-            <div
-              ref={cotizacionOkRef}
-              tabIndex={-1}
-              className="pointer-events-auto rounded-novey bg-text-ink px-4 py-3 text-sm text-white shadow-lg outline-none"
-            >
-              {toast.texto}
-            </div>
-          )}
-
-          {toast?.tipo === 'restaurado' && (
-            <div className="pointer-events-auto rounded-novey bg-text-ink px-4 py-3 text-sm text-white shadow-lg">
-              Producto restaurado
-            </div>
-          )}
-
-          {toast?.tipo === 'error-quitar' && (
-            <div role="alert" className="pointer-events-auto flex items-center gap-2 rounded-novey border border-feedback-error-dark/30 bg-feedback-error-bg px-4 py-2.5 text-sm text-feedback-error-dark shadow-lg">
-              <span className="min-w-0 flex-1">No pudimos quitar el producto. Intentá nuevamente.</span>
-              <button
-                type="button"
-                onClick={() => {
-                  setToast(null);
-                  quitar(toast.id);
-                }}
-                className="flex min-h-11 items-center px-2 font-semibold hover:underline"
-              >
-                Reintentar
-              </button>
-              <button
-                type="button"
-                onClick={() => setToast(null)}
-                aria-label="Cerrar el mensaje"
-                className="grid h-11 w-9 place-items-center text-lg leading-none opacity-70 hover:opacity-100"
-              >
-                ×
-              </button>
-            </div>
-          )}
-
-          {toast?.tipo === 'error-restaurar' && (
-            <div role="alert" className="pointer-events-auto flex items-center gap-2 rounded-novey border border-feedback-error-dark/30 bg-feedback-error-bg px-4 py-2.5 text-sm text-feedback-error-dark shadow-lg">
-              <span className="min-w-0 flex-1">No pudimos restaurar el producto.</span>
-              <button
-                type="button"
-                onClick={() => volverAAgregarItem(toast.recuerdo)}
-                className="flex min-h-11 items-center px-2 font-semibold hover:underline"
-              >
-                Volver a agregar
-              </button>
-              <button
-                type="button"
-                onClick={() => setToast(null)}
-                aria-label="Cerrar el mensaje"
-                className="grid h-11 w-9 place-items-center text-lg leading-none opacity-70 hover:opacity-100"
-              >
-                ×
-              </button>
-            </div>
-          )}
-        </div>
       </div>
     </>
   );

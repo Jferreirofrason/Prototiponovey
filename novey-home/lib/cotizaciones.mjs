@@ -2,28 +2,34 @@
 // combinación. Separado del componente para probarlo sin montar React
 // (pruebas/cotizaciones.test.mjs).
 //
+// El flujo es en dos pasos: buscar la cotización, mostrar un resumen sencillo
+// (número, productos, total, faltantes) y recién ahí agregarla al carrito.
+//
 // El prototipo no tiene backend: `resolverCotizacion` hace de API con
 // cotizaciones de demostración, una por estado del flujo. La costura para el
 // servicio real es exactamente esta función.
 //
-//   COT-1001  válida (sierra + pintura; la sierra ya está en el carrito demo,
-//             así que además demuestra la regla de combinación)
-//   COT-4004  con productos sin stock → confirmación de carga parcial
-//   COT-5005  con precios cambiados → confirmación con diferencia
-//   COT-2002  vencida
-//   COT-3003  de otra cuenta
-//   COT-9999  error de conexión en el primer intento; el reintento funciona
-//   otro COT-#### bien formado → no encontrada
+//   1001  se encuentra completa (sierra + pintura)
+//   4004  se encuentra con un producto sin stock → el resumen lo avisa
+//   5005  se encuentra con precios cambiados → el resumen muestra el total al día
+//   2002  vencida
+//   3003  de otra cuenta
+//   9999  error de conexión en el primer intento; el reintento funciona
+//   otro número bien formado → no encontrada
 //
-// REGLA DE NEGOCIO (estado 13): la cotización SE SUMA al carrito actual
-// combinando productos iguales (suma de cantidades). Nunca reemplaza, así
-// que no hace falta la confirmación de reemplazo.
+// REGLA DE NEGOCIO: la cotización SE SUMA al carrito actual combinando
+// productos iguales (suma de cantidades). Nunca reemplaza, así que no hace
+// falta una confirmación de reemplazo.
 
-/** Normaliza lo tipeado: sin espacios alrededor y en mayúsculas. */
-export const normalizarNumero = (texto) => texto.trim().toUpperCase();
+/**
+ * Normaliza lo tipeado: sin espacios y sin el prefijo "COT-" si el usuario lo
+ * copió del papel. Lo que identifica a la cotización son sus dígitos.
+ */
+export const normalizarNumero = (texto) =>
+  texto.trim().toUpperCase().replace(/^COT-?/, '');
 
-/** Formato real del número: COT- seguido de 4 a 6 dígitos. */
-export const esFormatoValido = (numero) => /^COT-\d{4,6}$/.test(numero);
+/** Formato real del número: 4 a 6 dígitos. */
+export const esFormatoValido = (numero) => /^\d{4,6}$/.test(numero);
 
 const SIERRA = {
   id: 'destacado-1',
@@ -50,10 +56,23 @@ const BROCAS = {
   image: '/images/p-brocas.jpg',
 };
 
+const totalDe = (items) =>
+  +items.reduce((n, it) => n + it.price * it.qty, 0).toFixed(2);
+
+/** Una cotización encontrada, con todo lo que necesita el resumen. */
+const encontrada = (items, extras = {}) => ({
+  tipo: 'encontrada',
+  items,
+  total: totalDe(items),
+  noDisponibles: [],
+  preciosActualizados: [],
+  ...extras,
+});
+
 /**
  * Resuelve un número BIEN FORMADO contra las cotizaciones de demostración.
  *  - `aplicadas`: números ya agregados a este carrito (estado "ya agregada").
- *  - `intento`: para COT-9999, el primer intento falla y el reintento sale.
+ *  - `intento`: para 9999, el primer intento falla y el reintento sale.
  * Devuelve siempre un objeto con `tipo`; el componente solo pinta estados.
  *
  * @param {string} numero
@@ -63,32 +82,24 @@ export function resolverCotizacion(numero, { aplicadas = [], intento = 1 } = {})
   if (aplicadas.includes(numero)) return { tipo: 'ya-agregada' };
 
   switch (numero) {
-    case 'COT-1001':
-      return { tipo: 'ok', items: [SIERRA, PINTURA] };
-    case 'COT-4004':
-      return {
-        tipo: 'parcial',
-        disponibles: [BROCAS, PINTURA],
+    case '1001':
+      return encontrada([SIERRA, PINTURA]);
+    case '4004':
+      return encontrada([BROCAS, PINTURA], {
         noDisponibles: ['Taladro percutor 850W (sin stock)'],
-      };
-    case 'COT-5005': {
-      const precioCotizado = 169.99;
-      return {
-        tipo: 'precios',
-        items: [{ ...SIERRA }],
-        cambios: [
-          { name: SIERRA.name, precioCotizado, precioActual: SIERRA.price },
+      });
+    case '5005':
+      return encontrada([{ ...SIERRA }], {
+        preciosActualizados: [
+          { name: SIERRA.name, precioCotizado: 169.99, precioActual: SIERRA.price },
         ],
-        totalCotizado: precioCotizado,
-        totalActual: SIERRA.price,
-      };
-    }
-    case 'COT-2002':
+      });
+    case '2002':
       return { tipo: 'vencida' };
-    case 'COT-3003':
+    case '3003':
       return { tipo: 'ajena' };
-    case 'COT-9999':
-      return intento < 2 ? { tipo: 'error-red' } : { tipo: 'ok', items: [BROCAS] };
+    case '9999':
+      return intento < 2 ? { tipo: 'error-red' } : encontrada([BROCAS]);
     default:
       return { tipo: 'no-encontrada' };
   }
