@@ -10,10 +10,13 @@ export default function ProductThumb({
   src,
   alt,
   className = '',
+  eager = false,
 }: {
   src?: string;
   alt: string;
   className?: string;
+  /** El mini carrito carga sus pocas miniaturas de inmediato. */
+  eager?: boolean;
 }) {
   const [falla, setFalla] = useState(false);
   const caja = `grid shrink-0 place-items-center overflow-hidden rounded-novey border border-border-light bg-white ${className}`;
@@ -36,7 +39,7 @@ export default function ProductThumb({
       <img
         src={src}
         alt={alt}
-        loading="lazy"
+        loading={eager ? 'eager' : 'lazy'}
         onError={() => setFalla(true)}
         className="h-full w-full object-contain"
       />

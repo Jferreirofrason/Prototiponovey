@@ -385,3 +385,13 @@ export const ALL_PRODUCTS: Product[] = Array.from(
     ),
   ).values(),
 );
+
+/**
+ * Imagen de respaldo para el mini carrito: los ítems guardados por versiones
+ * viejas del carrito (o por otras apps del dominio) pueden venir sin `image`;
+ * si el id está en el catálogo, la miniatura se resuelve desde acá.
+ */
+const IMAGEN_POR_ID = new Map(ALL_PRODUCTS.map((p) => [p.id, p.image]));
+export function imagenPorId(id: string): string | undefined {
+  return IMAGEN_POR_ID.get(id);
+}

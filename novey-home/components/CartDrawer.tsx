@@ -23,6 +23,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { ROUTES } from '../lib/routes';
+import { imagenPorId } from '../data/products';
 import ProductThumb from './ProductThumb';
 import AvisoInline, { AccionAviso } from './AvisoInline';
 import { CartItem, countUnits, readCart, subtotal, writeCart } from '../lib/cart';
@@ -835,7 +836,7 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
         className={`p-4 ${destacado === it.id ? 'fila-destacada' : ''}`}
       >
         <div className="flex gap-3">
-          <ProductThumb src={it.image} alt={it.name} className="h-16 w-16" />
+          <ProductThumb src={it.image || imagenPorId(it.id)} alt={it.name} className="h-16 w-16" eager />
           <div className="min-w-0 flex-1">
             <p className="line-clamp-2 text-sm font-medium leading-snug text-gray-900">{it.name}</p>
             <p className="mt-0.5 text-xs text-gray-500">{money(it.price)} c/u</p>
