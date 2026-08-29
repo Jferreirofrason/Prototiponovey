@@ -4,10 +4,10 @@ import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 import { ROUTES } from '../lib/routes';
 
-// Hero compacto en dos columnas: slider de campañas (75%) + dos banners
-// estáticos apilados (25%) para dar visibilidad simultánea a otras categorías.
-// Los textos y botones viven en HTML, nunca horneados en la imagen: se editan
-// acá, se leen con lector de pantalla y se adaptan solos entre dispositivos.
+// Hero compacto en dos columnas, enfocado en muebles: slider de ambientes
+// (75%) + dos banners estáticos de foto, apilados y del mismo tamaño (25%,
+// mitad y mitad). Los textos y botones viven en HTML, nunca horneados en la
+// imagen: se editan acá, se leen con lector de pantalla y se adaptan solos.
 
 interface Pieza {
   src: string;
@@ -21,50 +21,51 @@ interface Pieza {
 
 const SLIDES: Pieza[] = [
   {
-    src: '/images/hero-pets.jpg',
-    alt: 'Perro corriendo feliz por el pasto',
-    tag: 'Novey Pets Club',
-    title: 'Recíbelo el mismo día',
-    text: 'Que tu peludito no se quede sin su snack o comida favorita.',
-    cta: 'Comprar ahora',
+    src: '/images/ambiente.jpg',
+    alt: 'Living moderno con sofá gris, biblioteca y lámpara de pie',
+    tag: 'Salas',
+    title: 'Renueva tu sala',
+    text: 'Sofás, mesas y estanterías para armar el living que quieres.',
+    cta: 'Ver muebles',
     href: ROUTES.categoria,
   },
   {
-    src: '/images/hero-herramientas.jpg',
-    alt: 'Taladro inalámbrico DeWalt sobre una mesa de trabajo',
-    tag: 'Solo por hoy',
-    title: 'Hasta 40% en herramientas',
-    text: 'Descuentos en herramientas seleccionadas con el cupón NOVIEMBRE15.',
-    cta: 'Ver ofertas',
-    href: ROUTES.ofertas,
+    src: '/images/colchones.jpg',
+    alt: 'Dormitorio luminoso con cama tendida en tonos claros',
+    tag: 'Dormitorios',
+    title: 'Dormitorios para descansar mejor',
+    text: 'Camas, colchones y mesas de noche con estilo.',
+    cta: 'Explorar colección',
+    href: ROUTES.categoria,
   },
   {
-    src: '/images/ambiente.jpg',
-    alt: 'Living moderno con sofá y decoración cálida',
-    tag: 'Renueva tu hogar',
-    title: 'Muebles y decoración',
-    text: 'Todo para que cada espacio de tu casa se sienta nuevo.',
-    cta: 'Ver muebles',
+    src: '/images/p-mesa.jpg',
+    alt: 'Mesa de comedor de madera con sillas clásicas',
+    tag: 'Comedores',
+    title: 'Comedores para compartir',
+    text: 'Mesas y sillas para reunir a los tuyos todos los días.',
+    cta: 'Comprar ahora',
     href: ROUTES.categoria,
   },
 ];
 
-/** Banner estático superior de la columna derecha (foto + texto encima). */
-const BANNER_FOTO: Pieza = {
-  src: '/images/hero-navidad.jpg',
-  alt: 'Living decorado para Navidad con árbol y luces',
-  title: 'Tu Navidad empieza aquí',
-  text: 'Encuentra tus favoritos en tienda y en línea.',
-  cta: 'Comprar ahora',
-  href: ROUTES.navidad,
-};
-
-/** Banner estático inferior: bloque de marca + ofertas de la semana. */
-const BANNER_OFERTAS = {
-  title: 'Las ofertas de la semana',
-  cta: 'Comprar ahora',
-  href: ROUTES.ofertas,
-};
+/** Los dos banners estáticos de la derecha: mismo formato, mismo tamaño. */
+const BANNERS: Pieza[] = [
+  {
+    src: '/images/video-sofa.jpg',
+    alt: 'Sofá verde con almohadones a rayas',
+    title: 'Sofás y sillones',
+    cta: 'Explorar colección',
+    href: ROUTES.categoria,
+  },
+  {
+    src: '/images/outlet-muebles.jpg',
+    alt: 'Living acogedor con sofá esquinero y mesas de centro',
+    title: 'Ofertas en muebles',
+    cta: 'Ver ofertas',
+    href: ROUTES.ofertas,
+  },
+];
 
 const AUTOPLAY_MS = 6000;
 
@@ -77,7 +78,7 @@ export default function HeroBanner() {
     setActive((index + SLIDES.length) % SLIDES.length);
   };
 
-  // Navegación automática; se frena con el mouse encima, con el foco adentro
+  // Rotación automática; se frena con el mouse encima, con el foco adentro
   // o si la persona pidió menos movimiento.
   useEffect(() => {
     if (pausado) return;
@@ -89,9 +90,9 @@ export default function HeroBanner() {
   }, [pausado]);
 
   return (
-    <section aria-label="Promociones destacadas" className="w-full">
+    <section aria-label="Muebles y promociones destacadas" className="w-full">
       <div className="mx-auto grid w-full max-w-page gap-3 px-4 md:grid-cols-4 md:px-6">
-        {/* Columna izquierda: slider de campañas (única pieza con movimiento) */}
+        {/* Columna izquierda: slider de ambientes (única pieza con movimiento) */}
         <div
           aria-roledescription="carrusel"
           onMouseEnter={() => setPausado(true)}
@@ -190,48 +191,33 @@ export default function HeroBanner() {
           </p>
         </div>
 
-        {/* Columna derecha: dos banners estáticos apilados */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:col-span-1 md:grid-cols-1 md:grid-rows-[1fr_auto]">
-          {/* Campaña destacada con foto */}
-          <a
-            href={BANNER_FOTO.href}
-            className="group relative block overflow-hidden rounded-novey shadow-md min-h-[150px] md:min-h-0"
-          >
-            <Image
-              src={BANNER_FOTO.src}
-              alt={BANNER_FOTO.alt}
-              fill
-              className="object-cover transition-transform duration-300 group-hover:scale-[1.03] motion-reduce:transition-none"
-              sizes="(min-width: 768px) 300px, 100vw"
-            />
-            <span aria-hidden="true" className="absolute inset-0 bg-novey-navy/55" />
-            <span className="absolute inset-0 flex flex-col justify-center gap-1 p-4">
-              <span className="text-[18px] font-bold leading-tight text-white">{BANNER_FOTO.title}</span>
-              <span className="text-[12px] leading-4 text-white/90">{BANNER_FOTO.text}</span>
-              <span className="mt-1.5 text-[13px] font-semibold text-white underline underline-offset-4">
-                {BANNER_FOTO.cta}
+        {/* Columna derecha: dos banners de foto, mitad y mitad exacta */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:col-span-1 md:grid-cols-1 md:grid-rows-2">
+          {BANNERS.map((b) => (
+            <a
+              key={b.title}
+              href={b.href}
+              className="group relative block min-h-[150px] overflow-hidden rounded-novey shadow-md md:min-h-0"
+            >
+              <Image
+                src={b.src}
+                alt={b.alt}
+                fill
+                className="object-cover transition-transform duration-300 group-hover:scale-[1.03] motion-reduce:transition-none"
+                sizes="(min-width: 768px) 300px, 100vw"
+              />
+              <span
+                aria-hidden="true"
+                className="absolute inset-0 bg-gradient-to-t from-novey-navy/80 via-novey-navy/35 to-novey-navy/10"
+              />
+              <span className="absolute inset-0 flex flex-col justify-end gap-1 p-4">
+                <span className="text-[17px] font-bold leading-tight text-white">{b.title}</span>
+                <span className="text-[13px] font-semibold text-white underline underline-offset-4">
+                  {b.cta}
+                </span>
               </span>
-            </span>
-          </a>
-
-          {/* Ofertas de la semana: bloque de marca + texto editable */}
-          <a
-            href={BANNER_OFERTAS.href}
-            className="group flex items-stretch overflow-hidden rounded-novey border border-border-light bg-white shadow-md"
-          >
-            <span className="flex w-[104px] shrink-0 flex-col items-center justify-center gap-0.5 bg-novey-red px-2 py-4 text-white md:w-[74px] lg:w-[104px]">
-              <span className="text-[13px] font-bold leading-none md:text-[11px] lg:text-[13px]">Novey</span>
-              <span className="text-[19px] font-black leading-tight md:text-[15px] lg:text-[19px]">Ofertas</span>
-            </span>
-            <span className="flex min-w-0 flex-col justify-center gap-1 px-4 py-4 md:px-3 lg:px-4">
-              <span className="text-[15px] font-bold leading-tight text-text-ink md:text-[13px] lg:text-[15px]">
-                Las <span className="text-novey-red">ofertas</span> de la semana
-              </span>
-              <span className="text-[13px] font-semibold text-novey-blue underline underline-offset-4 group-hover:text-novey-blue-dark md:text-[12px] lg:text-[13px]">
-                {BANNER_OFERTAS.cta}
-              </span>
-            </span>
-          </a>
+            </a>
+          ))}
         </div>
       </div>
     </section>
