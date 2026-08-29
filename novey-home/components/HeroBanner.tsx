@@ -17,53 +17,60 @@ interface Pieza {
   text?: string;
   cta: string;
   href: string;
+  /** Encuadre de la foto dentro del recorte (object-position). */
+  pos?: string;
 }
 
 const SLIDES: Pieza[] = [
   {
-    src: '/images/ambiente.jpg',
-    alt: 'Living moderno con sofá gris, biblioteca y lámpara de pie',
+    src: '/images/sala-loft.jpg',
+    alt: 'Sala tipo loft con sofá gris, sillones y mesas de madera clara',
     tag: 'Salas',
     title: 'Renueva tu sala',
-    text: 'Sofás, mesas y estanterías para armar el living que quieres.',
+    text: 'Sofás, sillones y mesas para armar el living que quieres.',
     cta: 'Ver muebles',
     href: ROUTES.categoria,
+    pos: 'center 58%',
   },
   {
-    src: '/images/colchones.jpg',
-    alt: 'Dormitorio luminoso con cama tendida en tonos claros',
+    src: '/images/dormitorio-boho.jpg',
+    alt: 'Dormitorio cálido con cama tendida, plantas y lámpara de mimbre',
     tag: 'Dormitorios',
     title: 'Dormitorios para descansar mejor',
     text: 'Camas, colchones y mesas de noche con estilo.',
     cta: 'Explorar colección',
     href: ROUTES.categoria,
+    pos: 'center 55%',
   },
   {
-    src: '/images/p-mesa.jpg',
-    alt: 'Mesa de comedor de madera con sillas clásicas',
-    tag: 'Comedores',
-    title: 'Comedores para compartir',
-    text: 'Mesas y sillas para reunir a los tuyos todos los días.',
+    src: '/images/oficina-escritorio.jpg',
+    alt: 'Escritorio blanco minimalista con silla y cuadro apoyado',
+    tag: 'Oficina',
+    title: 'Tu oficina en casa',
+    text: 'Escritorios y sillas para trabajar cómodo todos los días.',
     cta: 'Comprar ahora',
     href: ROUTES.categoria,
+    pos: 'center 78%',
   },
 ];
 
 /** Los dos banners estáticos de la derecha: mismo formato, mismo tamaño. */
 const BANNERS: Pieza[] = [
   {
-    src: '/images/video-sofa.jpg',
-    alt: 'Sofá verde con almohadones a rayas',
+    src: '/images/sala-sofa.jpg',
+    alt: 'Sofá de terciopelo verde sobre piso de madera clara',
     title: 'Sofás y sillones',
     cta: 'Explorar colección',
     href: ROUTES.categoria,
+    pos: 'center 62%',
   },
   {
-    src: '/images/outlet-muebles.jpg',
-    alt: 'Living acogedor con sofá esquinero y mesas de centro',
+    src: '/images/sillon-ambiente.jpg',
+    alt: 'Sillón amarillo con lámpara dorada y mueble de televisión',
     title: 'Ofertas en muebles',
     cta: 'Ver ofertas',
     href: ROUTES.ofertas,
+    pos: 'center 60%',
   },
 ];
 
@@ -119,6 +126,7 @@ export default function HeroBanner() {
                   alt={slide.alt}
                   fill
                   className="object-cover"
+                  style={{ objectPosition: slide.pos ?? 'center' }}
                   sizes="(min-width: 1280px) 900px, 100vw"
                   priority={i === 0}
                 />
@@ -204,6 +212,7 @@ export default function HeroBanner() {
                 alt={b.alt}
                 fill
                 className="object-cover transition-transform duration-300 group-hover:scale-[1.03] motion-reduce:transition-none"
+                style={{ objectPosition: b.pos ?? 'center' }}
                 sizes="(min-width: 768px) 300px, 100vw"
               />
               <span
