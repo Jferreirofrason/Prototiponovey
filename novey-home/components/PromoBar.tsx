@@ -28,7 +28,7 @@ export default function PromoBar() {
   return (
     <section
       aria-label="Oferta especial con cupón de descuento"
-      className="sticky top-0 z-40 w-full bg-[#FFD200]"
+      className="sticky top-0 z-40 mt-3 w-full bg-[#FFD200]"
     >
       <div className="mx-auto flex w-full max-w-page flex-col gap-3 px-4 py-3 sm:px-6 md:flex-row md:items-center md:justify-between md:gap-6 lg:px-6">
         {/* Mensaje */}
