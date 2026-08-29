@@ -3,22 +3,22 @@ import { ROUTES } from '../lib/routes';
 
 const CATEGORIES = [
   {
-    image: '/figma/a5de832b80d36c1ea527fc0faa956fdecbc25a91.png',
+    image: '/images/ambiente.jpg',
     arrow: '/figma/32c4e21c6d9eb8c8bc43190f2d4e46994f471826.svg',
-    alt: 'Árbol de Navidad decorado junto a una ventana',
-    href: ROUTES.navidad,
+    alt: 'Living moderno con sofá gris, biblioteca y lámpara de pie',
+    href: ROUTES.categoria,
   },
   {
-    image: '/figma/3175951b8a96b3832490c59baf834cbd6b97334b.png',
+    image: '/images/colchones.jpg',
     arrow: '/figma/41a4f9abf8b19053b2420dfbf0981220ec5e8ece.svg',
-    alt: 'Regalos luminosos navideños con moños rojos en el jardín',
-    href: ROUTES.navidad,
+    alt: 'Dormitorio luminoso con cama tendida en tonos claros',
+    href: ROUTES.categoria,
   },
   {
-    image: '/figma/230cebd046cc9c7a85a39c4f0e5a97e4a5a786b2.png',
+    image: '/images/p-butaca.jpg',
     arrow: '/figma/0d27cdf5f16edd2f5849aa4f73fe37de4c4eb57e.svg',
-    alt: 'Bastones de caramelo decorativos frente a una casa iluminada',
-    href: ROUTES.navidad,
+    alt: 'Butaca reclinable beige con mesas auxiliares de madera',
+    href: ROUTES.categoria,
   },
 ];
 
@@ -26,7 +26,7 @@ export default function QuickCategories() {
   return (
     <section aria-labelledby="quick-categories-title" className="w-full">
       <h2 id="quick-categories-title" className="sr-only">
-        Categorías destacadas de Navidad
+        Categorías destacadas de muebles
       </h2>
       <div className="mx-auto w-full max-w-page px-4 sm:px-6 lg:px-6">
         <ul className="scroll-x flex snap-x snap-mandatory gap-4 md:grid md:grid-cols-3 md:gap-6">
