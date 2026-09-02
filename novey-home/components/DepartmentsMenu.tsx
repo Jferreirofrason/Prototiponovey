@@ -154,13 +154,13 @@ function FeaturedRow({ categories }: { categories: Category[] }) {
     <ul className="grid grid-cols-4 gap-x-6 min-[1200px]:grid-cols-6">
       {categories.slice(0, 6).map((cat, i) => (
         <li key={cat.name} className={i >= 4 ? 'hidden min-[1200px]:block' : undefined}>
-          {/* Adentro de la celda todo comparte el mismo centro: burbuja y
-              nombre centrados; la grilla sigue alineada con el título. */}
-          <a href={ROUTES.categoria} className="group flex w-full flex-col items-center gap-3">
+          {/* Alineado al inicio: la primera burbuja (y su nombre) arranca en
+              el mismo eje que "CATEGORÍAS DESTACADAS" y el bloque Camping. */}
+          <a href={ROUTES.categoria} className="group flex w-full flex-col items-start gap-3">
             <CategoryThumb cat={cat} size={72} />
             {/* dos líneas SIEMPRE reservadas: la grilla no baila entre nombres
                 cortos y largos */}
-            <span className="line-clamp-2 min-h-[36px] w-full text-center text-[13px] leading-[18px] text-text-ink group-hover:text-novey-blue group-hover:underline">
+            <span className="line-clamp-2 min-h-[36px] w-full text-left text-[13px] leading-[18px] text-text-ink group-hover:text-novey-blue group-hover:underline">
               {cat.name}
             </span>
           </a>
