@@ -465,7 +465,7 @@ export default function DepartmentsMenu() {
                             totalCats > 8 ? '' : 'xl:hidden'
                           }`}
                         >
-                          Ver todas las categorías de {activeDept.name} ({totalCats})
+                          Ver todas las categorías ({totalCats})
                           <ChevronRightIcon className="h-4 w-4" />
                         </a>
                       )}
