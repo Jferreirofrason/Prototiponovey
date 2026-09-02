@@ -149,18 +149,17 @@ function ViewToggle({ vista, onChange }: { vista: Vista; onChange: (v: Vista) =>
  */
 function FeaturedRow({ categories }: { categories: Category[] }) {
   return (
-    // Una sola línea FIJA: 6 destacadas en escritorio (4 en tablet), sin
-    // scroll. El resto se llega por "Ver todas las categorías (N)".
-    <ul className="grid grid-cols-4 gap-x-6 min-[1200px]:grid-cols-6">
+    // Una sola línea FIJA de 6 (4 en tablet), sin scroll. Celdas angostas
+    // (del ancho de la burbuja) repartidas: cada burbuja y su nombre
+    // comparten centro, y la primera queda pegada al eje del título.
+    <ul className="flex justify-between">
       {categories.slice(0, 6).map((cat, i) => (
-        <li key={cat.name} className={i >= 4 ? 'hidden min-[1200px]:block' : undefined}>
-          {/* Alineado al inicio: la primera burbuja (y su nombre) arranca en
-              el mismo eje que "CATEGORÍAS DESTACADAS" y el bloque Camping. */}
-          <a href={ROUTES.categoria} className="group flex w-full flex-col items-start gap-3">
+        <li key={cat.name} className={i >= 4 ? 'hidden w-[92px] min-[1200px]:block' : 'w-[92px]'}>
+          <a href={ROUTES.categoria} className="group flex flex-col items-center gap-3">
             <CategoryThumb cat={cat} size={72} />
             {/* dos líneas SIEMPRE reservadas: la grilla no baila entre nombres
                 cortos y largos */}
-            <span className="line-clamp-2 min-h-[36px] w-full text-left text-[13px] leading-[18px] text-text-ink group-hover:text-novey-blue group-hover:underline">
+            <span className="line-clamp-2 min-h-[36px] w-full text-center text-[13px] leading-[18px] text-text-ink group-hover:text-novey-blue group-hover:underline">
               {cat.name}
             </span>
           </a>
