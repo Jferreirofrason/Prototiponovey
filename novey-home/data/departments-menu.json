@@ -138,6 +138,29 @@
           "Juegos de agua",
           "Areneros"
         ]
+      },
+      {
+        "name": "Fogatas y calefactores",
+        "items": [
+          "Fogoneros",
+          "Calefactores de patio",
+          "Chimeneas de exterior",
+          "Leña y pellets",
+          "Encendedores",
+          "Accesorios de fogata"
+        ]
+      },
+      {
+        "name": "Náutica y playa",
+        "items": [
+          "Kayaks",
+          "Chalecos salvavidas",
+          "Sillas de playa",
+          "Sombrillas de playa",
+          "Carpas de playa",
+          "Conservadoras de playa",
+          "Juegos de playa"
+        ]
       }
     ]
   },

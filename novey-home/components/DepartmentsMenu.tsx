@@ -142,17 +142,40 @@ function ViewToggle({ vista, onChange }: { vista: Vista; onChange: (v: Vista) =>
   );
 }
 
-/** Fila de hasta 6 categorías destacadas (solo vista Visual). */
+/**
+ * Categorías destacadas (vista Visual): 6 por fila en escritorio, 4 en
+ * tablet. Si hay más, el grid abre otra fila; las burbujas nunca se achican
+ * para hacer entrar más. Foto de 72 con 12px hasta el nombre (máx. 2 líneas).
+ */
 function FeaturedRow({ categories }: { categories: Category[] }) {
   return (
-    <ul className="grid grid-cols-3 gap-x-4 gap-y-5 md:grid-cols-4 xl:grid-cols-6">
-      {categories.slice(0, MAX_DESTACADAS).map((cat) => (
+    <ul className="grid grid-cols-4 gap-x-4 gap-y-5 xl:grid-cols-6">
+      {categories.map((cat) => (
         <li key={cat.name}>
-          <a href={ROUTES.categoria} className="group flex min-h-11 flex-col items-center gap-2 text-center">
+          <a href={ROUTES.categoria} className="group flex min-h-11 flex-col items-center gap-3 text-center">
             <CategoryThumb cat={cat} size={72} />
             <span className="line-clamp-2 text-[13px] leading-snug text-text-ink group-hover:text-novey-blue group-hover:underline">
               {cat.name}
             </span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/**
+ * Destacadas en mobile: una sola fila con scroll horizontal, burbujas de 64
+ * y ~3 categorías completas a la vista con la siguiente asomada.
+ */
+function FeaturedScroll({ categories }: { categories: Category[] }) {
+  return (
+    <ul className="scroll-x -mx-4 flex gap-4 overflow-x-auto px-4 pb-2">
+      {categories.map((cat) => (
+        <li key={cat.name} className="w-[96px] shrink-0">
+          <a href={ROUTES.categoria} className="group flex min-h-11 flex-col items-center gap-2 text-center">
+            <CategoryThumb cat={cat} size={64} />
+            <span className="line-clamp-2 text-[12px] leading-snug text-text-ink">{cat.name}</span>
           </a>
         </li>
       ))}
@@ -215,9 +238,11 @@ export default function DepartmentsMenu() {
   const [open, setOpen] = useState(false);
   const [vista, setVista] = useState<Vista>('visual');
   const [activeSlug, setActiveSlug] = useState(DEPARTMENTS[0]?.slug ?? '');
-  // Niveles mobile: departamentos → subcategorías → opciones.
+  // Mobile: departamentos → pantalla del departamento con acordeón.
   const [mobileDept, setMobileDept] = useState<string | null>(null);
-  const [mobileCat, setMobileCat] = useState<string | null>(null);
+  const [abiertas, setAbiertas] = useState<Set<string>>(new Set());
+  // Alto máximo real del panel: lo que quede de ventana bajo el header.
+  const [altoMax, setAltoMax] = useState<number | null>(null);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const railRef = useRef<HTMLUListElement>(null);
@@ -228,9 +253,14 @@ export default function DepartmentsMenu() {
 
   const activeDept = DEPARTMENTS.find((d) => d.slug === activeSlug) ?? DEPARTMENTS[0];
   const mobileActiveDept = mobileDept ? DEPARTMENTS.find((d) => d.slug === mobileDept) ?? null : null;
-  const mobileActiveCat = mobileActiveDept && mobileCat
-    ? mobileActiveDept.categories.find((c) => c.name === mobileCat) ?? null
-    : null;
+
+  const alternarAcordeon = (nombre: string) =>
+    setAbiertas((prev) => {
+      const next = new Set(prev);
+      if (next.has(nombre)) next.delete(nombre);
+      else next.add(nombre);
+      return next;
+    });
 
   // La vista elegida se recuerda durante la sesión. En pantallas angostas la
   // primera vez arranca en Lista: es más fácil de recorrer en una columna.
@@ -268,6 +298,21 @@ export default function DepartmentsMenu() {
     if (hoverTimer.current) clearTimeout(hoverTimer.current);
   };
 
+  // max-height = calc(100vh - header): se mide dónde arranca el panel y el
+  // menú nunca crece fuera de la pantalla; lo que sobre scrollea adentro.
+  useEffect(() => {
+    if (!open) return;
+    const medir = () => {
+      const el = rootRef.current?.querySelector('#departments-menu');
+      if (!el) return;
+      const top = el.getBoundingClientRect().top;
+      setAltoMax(Math.max(320, window.innerHeight - top - 12));
+    };
+    medir();
+    window.addEventListener('resize', medir);
+    return () => window.removeEventListener('resize', medir);
+  }, [open]);
+
   useEffect(() => {
     if (!open) return;
     const onPointerDown = (e: MouseEvent | TouchEvent) => {
@@ -301,7 +346,7 @@ export default function DepartmentsMenu() {
     setOpen((v) => {
       if (!v) {
         setMobileDept(null);
-        setMobileCat(null);
+        setAbiertas(new Set());
       }
       return !v;
     });
@@ -335,10 +380,13 @@ export default function DepartmentsMenu() {
           {/* Anclado al botón: mismo padding que la barra de pills y sin
               centrar, así el borde izquierdo del panel coincide con el del
               botón "Departamentos" y no queda separación vertical. */}
-          <div className="-mt-[11px] hidden w-full max-w-page px-4 md:px-6 lg:block">
-            <div className="flex max-h-[80vh] items-stretch overflow-hidden rounded-novey rounded-tl-none border border-border-light bg-white shadow-[0_16px_40px_rgba(0,0,0,0.14)]">
+          <div className="-mt-[11px] hidden w-full max-w-page px-4 md:block md:px-6">
+            <div
+              style={altoMax ? { maxHeight: altoMax } : undefined}
+              className="flex max-h-[80vh] items-stretch overflow-hidden rounded-novey rounded-tl-none border border-border-light bg-white shadow-[0_16px_40px_rgba(0,0,0,0.14)]"
+            >
               {/* Rail de departamentos: fijo mientras el contenido scrollea */}
-              <div className="flex w-[280px] shrink-0 flex-col border-r border-border-light bg-[#fafbfc]">
+              <div className="flex w-[240px] shrink-0 flex-col border-r border-border-light bg-[#fafbfc] xl:w-[280px]">
                 <p className="border-b border-border-light px-5 py-3.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-text-tertiary">
                   Departamentos
                 </p>
@@ -370,12 +418,12 @@ export default function DepartmentsMenu() {
 
               {/* Panel derecho: encabezado fijo, contenido con scroll propio */}
               <div className="flex min-w-0 flex-1 flex-col">
-                <div aria-live="polite" className="flex shrink-0 items-center justify-between gap-4 border-b border-border-light px-8 py-4">
+                <div aria-live="polite" className="flex shrink-0 items-center justify-between gap-4 border-b border-border-light px-6 py-4 xl:px-8">
                   <h3 className="min-w-0 truncate text-[22px] font-bold leading-tight text-text-ink">{activeDept?.name}</h3>
                   <ViewToggle vista={vista} onChange={cambiarVista} />
                 </div>
 
-                <div ref={scrollRef} className="flex-1 overflow-y-auto px-8 pb-8 pt-6">
+                <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-6 xl:p-8">
                   {!activeDept || totalCats === 0 ? (
                     <p className="py-10 text-center text-[14px] text-text-tertiary">
                       Todavía no hay categorías en este departamento.
@@ -393,13 +441,27 @@ export default function DepartmentsMenu() {
                         </>
                       )}
 
-                      {/* Todas las subcategorías a la vista (tope 8): filas de 4
-                          en escritorio, mismos bloques y conteos en ambas vistas */}
-                      <div className="grid grid-cols-4 gap-x-8 gap-y-6">
-                        {activeDept.categories.slice(0, subcatsEnMenu(totalCats)).map((cat) => (
-                          <CategoryBlock key={cat.name} cat={cat} />
+                      {/* Subcategorías: máx. 3 columnas y 6 bloques en tablet,
+                          4 columnas y 8 bloques en escritorio; el resto sale
+                          por "Ver todas las categorías", nunca achicando nada */}
+                      <div className="grid grid-cols-3 gap-8 xl:grid-cols-4">
+                        {activeDept.categories.slice(0, subcatsEnMenu(totalCats)).map((cat, i) => (
+                          <div key={cat.name} className={i >= 6 ? 'hidden xl:block' : undefined}>
+                            <CategoryBlock cat={cat} />
+                          </div>
                         ))}
                       </div>
+                      {totalCats > 6 && (
+                        <a
+                          href={ROUTES.categoria}
+                          className={`mt-7 inline-flex min-h-11 items-center gap-1.5 text-[14px] font-semibold text-novey-blue hover:underline ${
+                            totalCats > 8 ? '' : 'xl:hidden'
+                          }`}
+                        >
+                          Ver todas las categorías de {activeDept.name} ({totalCats})
+                          <ChevronRightIcon className="h-4 w-4" />
+                        </a>
+                      )}
                     </>
                   )}
                 </div>
@@ -408,7 +470,10 @@ export default function DepartmentsMenu() {
           </div>
 
           {/* ---------- Mobile / tablet: navegación por niveles ---------- */}
-          <div className="max-h-[80vh] overflow-y-auto border-b border-border-light bg-white shadow-lg lg:hidden">
+          <div
+            style={altoMax ? { maxHeight: altoMax } : undefined}
+            className="max-h-[80vh] overflow-y-auto border-b border-border-light bg-white shadow-lg md:hidden"
+          >
             {/* Nivel 1 — departamentos */}
             {!mobileActiveDept && (
               <nav aria-label="Departamentos" className="px-4 py-2">
@@ -432,8 +497,8 @@ export default function DepartmentsMenu() {
               </nav>
             )}
 
-            {/* Nivel 2 — categorías del departamento */}
-            {mobileActiveDept && !mobileActiveCat && (
+            {/* Nivel 2 — el departamento: destacadas deslizables y acordeón */}
+            {mobileActiveDept && (
               <div className="px-4 py-3">
                 <div className="flex items-center justify-between gap-3">
                   <button
@@ -447,65 +512,74 @@ export default function DepartmentsMenu() {
                   <ViewToggle vista={vista} onChange={cambiarVista} />
                 </div>
                 <h3 className="mt-1 text-[20px] font-bold leading-tight text-text-ink">{mobileActiveDept.name}</h3>
+
                 {mobileActiveDept.categories.length === 0 ? (
                   <p className="py-8 text-center text-[14px] text-text-tertiary">
                     Todavía no hay categorías en este departamento.
                   </p>
                 ) : (
-                  <ul className="mt-3 grid grid-cols-1 gap-x-6 pb-4 md:grid-cols-2">
-                    {mobileActiveDept.categories.map((cat) => (
-                      <li key={cat.name}>
-                        <button
-                          type="button"
-                          onClick={() => (cat.items.length > 0 ? setMobileCat(cat.name) : undefined)}
-                          {...(cat.items.length === 0 ? { 'aria-label': `${cat.name} (sin opciones)` } : {})}
-                          className={`flex w-full items-center gap-3 border-b border-border-light px-1 text-left ${
-                            vista === 'visual' ? 'min-h-14 py-2' : 'min-h-12 py-3'
-                          }`}
-                        >
-                          {vista === 'visual' && <CategoryThumb cat={cat} size={44} />}
-                          <span className="flex-1 text-[16px] text-text-ink">{cat.name}</span>
-                          {cat.items.length > 0 && <ChevronRightIcon className="h-4 w-4 shrink-0 text-text-disabled" />}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
+                  <>
+                    {vista === 'visual' && (
+                      <div className="mt-3">
+                        <FeaturedScroll categories={mobileActiveDept.categories} />
+                      </div>
+                    )}
 
-            {/* Nivel 3 — opciones de la categoría */}
-            {mobileActiveDept && mobileActiveCat && (
-              <div className="px-4 py-3">
-                <button
-                  type="button"
-                  onClick={() => setMobileCat(null)}
-                  className="flex min-h-11 items-center gap-2 text-[15px] font-medium text-novey-blue"
-                >
-                  <ArrowLeftIcon className="h-4 w-4" />
-                  Volver a {mobileActiveDept.name}
-                </button>
-                <h3 className="mt-1 text-[20px] font-bold leading-tight text-text-ink">{mobileActiveCat.name}</h3>
-                <ul className="mt-2 pb-4">
-                  <li>
-                    <a
-                      href={ROUTES.categoria}
-                      className="flex min-h-12 items-center border-b border-border-light px-1 py-3 text-[16px] font-semibold text-novey-blue"
-                    >
-                      Ver todo en {mobileActiveCat.name}
-                    </a>
-                  </li>
-                  {mobileActiveCat.items.map((item) => (
-                    <li key={item}>
-                      <a
-                        href={ROUTES.categoria}
-                        className="flex min-h-12 items-center border-b border-border-light px-1 py-3 text-[16px] text-text-ink"
-                      >
-                        {item}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
+                    {/* Acordeón: una fila de al menos 48px por categoría; al
+                        abrirla, hasta 5 opciones y "Ver todo (N)" si hay más */}
+                    <ul className="mt-2 pb-4">
+                      {mobileActiveDept.categories.map((cat) => {
+                        const abierta = abiertas.has(cat.name);
+                        const total = cat.items.length;
+                        return (
+                          <li key={cat.name} className="border-b border-border-light">
+                            <button
+                              type="button"
+                              onClick={() => alternarAcordeon(cat.name)}
+                              aria-expanded={abierta}
+                              className="flex min-h-12 w-full items-center justify-between gap-3 px-1 py-3 text-left"
+                            >
+                              <span className="flex-1 text-[16px] font-medium text-text-ink">{cat.name}</span>
+                              <ChevronDownIcon
+                                className={`h-4 w-4 shrink-0 text-text-secondary transition-transform duration-150 ${abierta ? 'rotate-180' : ''}`}
+                              />
+                            </button>
+                            {abierta && (
+                              <ul className="pb-2 pl-3">
+                                {total === 0 && (
+                                  <li className="py-2 text-[14px] text-text-tertiary">
+                                    Muy pronto vas a encontrar opciones acá.
+                                  </li>
+                                )}
+                                {cat.items.slice(0, opcionesEnBloque(total)).map((item) => (
+                                  <li key={item}>
+                                    <a
+                                      href={ROUTES.categoria}
+                                      className="flex min-h-11 items-center px-1 text-[15px] text-text-ink"
+                                    >
+                                      {item}
+                                    </a>
+                                  </li>
+                                ))}
+                                {necesitaVerTodo(total) && (
+                                  <li>
+                                    <a
+                                      href={ROUTES.categoria}
+                                      aria-label={`Ver todo en ${cat.name} (${total - opcionesEnBloque(total)} opciones más)`}
+                                      className="flex min-h-11 items-center px-1 text-[15px] font-semibold text-novey-blue"
+                                    >
+                                      {etiquetaVerTodo(total)}
+                                    </a>
+                                  </li>
+                                )}
+                              </ul>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </>
+                )}
               </div>
             )}
           </div>

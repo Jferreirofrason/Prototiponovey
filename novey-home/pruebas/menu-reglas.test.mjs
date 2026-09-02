@@ -57,10 +57,12 @@ test('la sexta línea dice cuántas opciones quedaron ocultas, no el total', () 
 
 /* ---------- invariantes de los datos ---------- */
 
-test('el ejemplo del brief existe: Aire libre con 8 subcategorías en dos filas de 4', () => {
+test('el ejemplo máximo existe: Aire libre supera el tope de 8 y el menú recorta', () => {
   const aire = DEPARTMENTS.find((d) => d.slug === 'aire-libre-y-recreacion');
   assert.ok(aire, 'falta el departamento aire-libre-y-recreacion');
-  assert.equal(aire.categories.length, 8);
+  // 10 categorías: el menú muestra 8 y el resto sale por
+  // "Ver todas las categorías" (el ejemplo pedido de contenido máximo).
+  assert.equal(aire.categories.length, 10);
   assert.equal(subcatsEnMenu(aire.categories.length), 8);
   const nombres = aire.categories.map((c) => c.name);
   for (const esperado of ['Camping', 'Parrillas', 'Muebles de exterior', 'Piscinas', 'Jardín', 'Deportes', 'Bicicletas', 'Juegos al aire libre']) {
