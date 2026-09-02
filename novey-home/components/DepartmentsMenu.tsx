@@ -386,11 +386,13 @@ export default function DepartmentsMenu() {
               className="flex max-h-[80vh] items-stretch overflow-hidden rounded-novey rounded-tl-none border border-border-light bg-white shadow-[0_16px_40px_rgba(0,0,0,0.14)]"
             >
               {/* Rail de departamentos: fijo mientras el contenido scrollea */}
-              <div className="flex w-[240px] shrink-0 flex-col border-r border-border-light bg-[#fafbfc] xl:w-[280px]">
-                <p className="border-b border-border-light px-5 py-3.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-text-tertiary">
+              {/* Un solo eje: 16px de padding exterior + 12px interno = texto
+                  del título y de cada fila a 28px del borde del sidebar. */}
+              <div className="flex w-[240px] shrink-0 flex-col gap-1 border-r border-border-light bg-[#fafbfc] p-4 xl:w-[280px]">
+                <p className="flex h-8 w-full shrink-0 items-center border-b border-border-light px-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-text-tertiary">
                   Departamentos
                 </p>
-                <ul ref={railRef} onKeyDown={onRailKeyDown} className="flex-1 space-y-0.5 overflow-y-auto p-2.5" onMouseLeave={cancelHover}>
+                <ul ref={railRef} onKeyDown={onRailKeyDown} className="flex flex-1 flex-col gap-1 overflow-y-auto" onMouseLeave={cancelHover}>
                   {DEPARTMENTS.map((d) => {
                     const isActive = d.slug === activeDept?.slug;
                     return (
@@ -401,10 +403,12 @@ export default function DepartmentsMenu() {
                           onFocus={() => selectDept(d.slug)}
                           onClick={() => selectDept(d.slug)}
                           aria-current={isActive ? 'true' : undefined}
-                          className={`flex min-h-11 w-full items-center justify-between gap-2 rounded-novey border px-3 py-2 text-left text-[14px] transition-colors duration-150 ${
+                          className={`flex min-h-11 w-full items-center justify-between gap-2 rounded-novey px-3 text-left text-[14px] transition-colors duration-150 ${
                             isActive
-                              ? 'border-novey-blue bg-novey-blue-bg font-semibold text-novey-blue'
-                              : 'border-transparent text-text-ink hover:bg-gray-100'
+                              ? // ring interior en lugar de borde: marca el estado
+                                // sin correr el texto del eje de 28px
+                                'bg-novey-blue-bg font-semibold text-novey-blue ring-1 ring-inset ring-novey-blue'
+                              : 'text-text-ink hover:bg-gray-100'
                           }`}
                         >
                           {d.name}
