@@ -149,11 +149,11 @@ function ViewToggle({ vista, onChange }: { vista: Vista; onChange: (v: Vista) =>
  */
 function FeaturedRow({ categories }: { categories: Category[] }) {
   return (
-    // Una sola línea: las destacadas nunca abren segunda fila; lo que no
-    // entra queda asomado y se desliza, igual que en mobile.
-    <ul className="scroll-x flex gap-8 overflow-x-auto pb-2">
-      {categories.map((cat) => (
-        <li key={cat.name} className="w-[132px] shrink-0">
+    // Una sola línea FIJA: 6 destacadas en escritorio (4 en tablet), sin
+    // scroll. El resto se llega por "Ver todas las categorías (N)".
+    <ul className="grid grid-cols-4 gap-x-6 min-[1200px]:grid-cols-6">
+      {categories.slice(0, 6).map((cat, i) => (
+        <li key={cat.name} className={i >= 4 ? 'hidden min-[1200px]:block' : undefined}>
           {/* Adentro de la celda todo comparte el mismo centro: burbuja y
               nombre centrados; la grilla sigue alineada con el título. */}
           <a href={ROUTES.categoria} className="group flex w-full flex-col items-center gap-3">
