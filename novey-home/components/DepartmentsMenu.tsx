@@ -244,9 +244,11 @@ export default function DepartmentsMenu() {
   const [open, setOpen] = useState(false);
   const [vista, setVista] = useState<Vista>('visual');
   const [activeSlug, setActiveSlug] = useState(DEPARTMENTS[0]?.slug ?? '');
-  // Mobile: departamentos → pantalla del departamento con acordeón.
+  // Mobile: navegación por pantallas en dos niveles — departamentos →
+  // categorías del departamento → subcategorías de la categoría. Cada toque
+  // abre una vista nueva (sin acordeones): más simple de seguir en el teléfono.
   const [mobileDept, setMobileDept] = useState<string | null>(null);
-  const [abiertas, setAbiertas] = useState<Set<string>>(new Set());
+  const [mobileCat, setMobileCat] = useState<string | null>(null);
   // Alto máximo real del panel: lo que quede de ventana bajo el header.
   const [altoMax, setAltoMax] = useState<number | null>(null);
 
@@ -259,14 +261,9 @@ export default function DepartmentsMenu() {
 
   const activeDept = DEPARTMENTS.find((d) => d.slug === activeSlug) ?? DEPARTMENTS[0];
   const mobileActiveDept = mobileDept ? DEPARTMENTS.find((d) => d.slug === mobileDept) ?? null : null;
-
-  const alternarAcordeon = (nombre: string) =>
-    setAbiertas((prev) => {
-      const next = new Set(prev);
-      if (next.has(nombre)) next.delete(nombre);
-      else next.add(nombre);
-      return next;
-    });
+  const mobileActiveCat = mobileActiveDept && mobileCat
+    ? mobileActiveDept.categories.find((c) => c.name === mobileCat) ?? null
+    : null;
 
   // La vista elegida se recuerda durante la sesión. En pantallas angostas la
   // primera vez arranca en Lista: es más fácil de recorrer en una columna.
@@ -352,7 +349,7 @@ export default function DepartmentsMenu() {
     setOpen((v) => {
       if (!v) {
         setMobileDept(null);
-        setAbiertas(new Set());
+        setMobileCat(null);
       }
       return !v;
     });
@@ -507,89 +504,85 @@ export default function DepartmentsMenu() {
               </nav>
             )}
 
-            {/* Nivel 2 — el departamento: destacadas deslizables y acordeón */}
-            {mobileActiveDept && (
-              <div className="px-4 py-3">
-                <div className="flex items-center justify-between gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setMobileDept(null)}
-                    className="flex min-h-11 items-center gap-2 text-[15px] font-medium text-novey-blue"
-                  >
-                    <ArrowLeftIcon className="h-4 w-4" />
-                    Volver a Departamentos
-                  </button>
-                  <ViewToggle vista={vista} onChange={cambiarVista} />
-                </div>
-                <h3 className="mt-1 text-[20px] font-bold leading-tight text-text-ink">{mobileActiveDept.name}</h3>
-
+            {/* Pantalla 1 — categorías del departamento. Cada fila navega a
+                sus subcategorías (chevron derecho, nunca hacia abajo). */}
+            {mobileActiveDept && !mobileActiveCat && (
+              <div className="flex flex-col gap-8 px-4 py-6">
+                <button
+                  type="button"
+                  onClick={() => setMobileDept(null)}
+                  className="flex min-h-11 w-fit items-center gap-2 text-[15px] font-medium text-novey-blue"
+                >
+                  <ArrowLeftIcon className="h-5 w-5" />
+                  Volver a Departamentos
+                </button>
+                <h3 className="line-clamp-2 text-[20px] font-bold leading-tight text-text-ink">
+                  {mobileActiveDept.name}
+                </h3>
                 {mobileActiveDept.categories.length === 0 ? (
-                  <p className="py-8 text-center text-[14px] text-text-tertiary">
+                  <p className="py-4 text-center text-[14px] text-text-tertiary">
                     Todavía no hay categorías en este departamento.
                   </p>
                 ) : (
-                  <>
-                    {vista === 'visual' && (
-                      <div className="mt-3">
-                        <FeaturedScroll categories={mobileActiveDept.categories} />
-                      </div>
-                    )}
-
-                    {/* Acordeón: una fila de al menos 48px por categoría; al
-                        abrirla, hasta 5 opciones y "Ver todo (N)" si hay más */}
-                    <ul className="mt-2 pb-4">
-                      {mobileActiveDept.categories.map((cat) => {
-                        const abierta = abiertas.has(cat.name);
-                        const total = cat.items.length;
-                        return (
-                          <li key={cat.name} className="border-b border-border-light">
-                            <button
-                              type="button"
-                              onClick={() => alternarAcordeon(cat.name)}
-                              aria-expanded={abierta}
-                              className="flex min-h-12 w-full items-center justify-between gap-3 px-1 py-3 text-left"
-                            >
-                              <span className="flex-1 text-[16px] font-medium text-text-ink">{cat.name}</span>
-                              <ChevronDownIcon
-                                className={`h-4 w-4 shrink-0 text-text-secondary transition-transform duration-150 ${abierta ? 'rotate-180' : ''}`}
-                              />
-                            </button>
-                            {abierta && (
-                              <ul className="pb-2 pl-3">
-                                {total === 0 && (
-                                  <li className="py-2 text-[14px] text-text-tertiary">
-                                    Muy pronto vas a encontrar opciones acá.
-                                  </li>
-                                )}
-                                {cat.items.slice(0, opcionesEnBloque(total)).map((item) => (
-                                  <li key={item}>
-                                    <a
-                                      href={ROUTES.categoria}
-                                      className="flex min-h-11 items-center px-1 text-[15px] text-text-ink"
-                                    >
-                                      {item}
-                                    </a>
-                                  </li>
-                                ))}
-                                {necesitaVerTodo(total) && (
-                                  <li>
-                                    <a
-                                      href={ROUTES.categoria}
-                                      aria-label={`Ver todo en ${cat.name} (${total - opcionesEnBloque(total)} opciones más)`}
-                                      className="flex min-h-11 items-center px-1 text-[15px] font-semibold text-novey-blue"
-                                    >
-                                      {etiquetaVerTodo(total)}
-                                    </a>
-                                  </li>
-                                )}
-                              </ul>
-                            )}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </>
+                  <ul>
+                    {mobileActiveDept.categories.map((cat) => (
+                      <li key={cat.name}>
+                        <button
+                          type="button"
+                          onClick={() => (cat.items.length > 0 ? setMobileCat(cat.name) : undefined)}
+                          disabled={cat.items.length === 0}
+                          className="flex min-h-14 w-full items-center justify-between gap-4 border-b border-border-light px-2 py-4 text-left disabled:opacity-50"
+                        >
+                          <span className="line-clamp-2 flex-1 text-[16px] text-text-ink">{cat.name}</span>
+                          {cat.items.length > 0 && (
+                            <ChevronRightIcon className="h-4 w-4 shrink-0 text-text-disabled" />
+                          )}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
                 )}
+              </div>
+            )}
+
+            {/* Pantalla 2 — subcategorías de la categoría. Header con volver a
+                categorías; cada fila lleva al catálogo (sin chevron). */}
+            {mobileActiveDept && mobileActiveCat && (
+              <div className="flex flex-col px-4 py-6">
+                <div className="flex min-h-14 items-center gap-4 px-2">
+                  <button
+                    type="button"
+                    onClick={() => setMobileCat(null)}
+                    aria-label={`Volver a ${mobileActiveDept.name}`}
+                    className="grid h-11 w-11 shrink-0 -ml-2.5 place-items-center text-novey-blue"
+                  >
+                    <ArrowLeftIcon className="h-5 w-5" />
+                  </button>
+                  <h3 className="line-clamp-2 flex-1 text-[20px] font-bold leading-tight text-text-ink">
+                    {mobileActiveCat.name}
+                  </h3>
+                </div>
+                <span aria-hidden="true" className="mb-4 mt-2 block h-px w-full bg-border-light" />
+                <ul>
+                  <li>
+                    <a
+                      href={ROUTES.categoria}
+                      className="flex min-h-14 items-center border-b border-border-light px-2 py-4 text-[16px] font-semibold text-novey-blue"
+                    >
+                      Ver todo en {mobileActiveCat.name}
+                    </a>
+                  </li>
+                  {mobileActiveCat.items.map((item) => (
+                    <li key={item}>
+                      <a
+                        href={ROUTES.categoria}
+                        className="flex min-h-14 items-center border-b border-border-light px-2 py-4 text-[16px] text-text-ink"
+                      >
+                        {item}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
           </div>
