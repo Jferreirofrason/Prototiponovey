@@ -127,7 +127,8 @@
           "Cascos",
           "Accesorios de ciclismo",
           "Luces y candados"
-        ]
+        ],
+        "image": "/images/departments/aire-libre-y-recreacion-bicicletas.jpg"
       },
       {
         "name": "Juegos al aire libre",
@@ -137,7 +138,8 @@
           "Camas elásticas",
           "Juegos de agua",
           "Areneros"
-        ]
+        ],
+        "image": "/images/departments/aire-libre-y-recreacion-juegos-al-aire-libre.jpg"
       },
       {
         "name": "Fogatas y calefactores",
@@ -148,7 +150,8 @@
           "Leña y pellets",
           "Encendedores",
           "Accesorios de fogata"
-        ]
+        ],
+        "image": "/images/departments/aire-libre-y-recreacion-fogatas.jpg"
       },
       {
         "name": "Náutica y playa",
@@ -160,7 +163,8 @@
           "Carpas de playa",
           "Conservadoras de playa",
           "Juegos de playa"
-        ]
+        ],
+        "image": "/images/departments/aire-libre-y-recreacion-nautica.jpg"
       }
     ]
   },
