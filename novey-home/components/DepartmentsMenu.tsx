@@ -149,10 +149,11 @@ function ViewToggle({ vista, onChange }: { vista: Vista; onChange: (v: Vista) =>
  */
 function FeaturedRow({ categories }: { categories: Category[] }) {
   return (
-    // Una sola línea FIJA de 6 (4 en tablet), sin scroll. Celdas angostas
-    // (del ancho de la burbuja) repartidas: cada burbuja y su nombre
-    // comparten centro, y la primera queda pegada al eje del título.
-    <ul className="flex justify-between">
+    // Una sola línea FIJA de 6 (4 en tablet), sin scroll. Gap fijo alineado
+    // a la izquierda: el espaciado entre burbujas es el mismo tenga 3 o 6
+    // categorías (no se estiran al ancho). Cada burbuja y su nombre
+    // comparten centro; la primera queda pegada al eje del título.
+    <ul className="flex flex-wrap gap-x-16 gap-y-6">
       {categories.slice(0, 6).map((cat, i) => (
         <li key={cat.name} className={i >= 4 ? 'hidden w-[92px] min-[1200px]:block' : 'w-[92px]'}>
           <a href={ROUTES.categoria} className="group flex flex-col items-center gap-3">
