@@ -123,20 +123,22 @@ function CategoryThumb({ cat, size }: { cat: Category; size: number }) {
   );
 }
 
-/** Selector Visual / Lista: control segmentado de dos opciones. */
+/**
+ * Selector Visual / Lista: control segmentado, solo íconos. El nombre queda
+ * en aria-label y title, así el lector de pantalla y el tooltip lo anuncian
+ * aunque el texto no se muestre.
+ */
 function ViewToggle({ vista, onChange }: { vista: Vista; onChange: (v: Vista) => void }) {
-  const base = 'flex h-9 min-w-[84px] items-center justify-center gap-1.5 rounded-novey px-3 text-[13px] transition-colors duration-150';
-  const activo = 'border border-novey-blue bg-white font-semibold text-novey-blue shadow-card';
+  const base = 'grid h-9 w-11 place-items-center rounded-novey transition-colors duration-150';
+  const activo = 'border border-novey-blue bg-white text-novey-blue shadow-card';
   const inactivo = 'border border-transparent text-text-secondary hover:text-text-ink';
   return (
     <div role="tablist" aria-label="Cómo ver las categorías" className="flex shrink-0 items-center gap-1 rounded-novey bg-[#f3f4f6] p-1">
-      <button type="button" role="tab" aria-selected={vista === 'visual'} onClick={() => onChange('visual')} className={`${base} ${vista === 'visual' ? activo : inactivo}`}>
+      <button type="button" role="tab" aria-label="Vista visual" title="Vista visual" aria-selected={vista === 'visual'} onClick={() => onChange('visual')} className={`${base} ${vista === 'visual' ? activo : inactivo}`}>
         <GridIcon className="h-4 w-4" />
-        Visual
       </button>
-      <button type="button" role="tab" aria-selected={vista === 'lista'} onClick={() => onChange('lista')} className={`${base} ${vista === 'lista' ? activo : inactivo}`}>
+      <button type="button" role="tab" aria-label="Vista de lista" title="Vista de lista" aria-selected={vista === 'lista'} onClick={() => onChange('lista')} className={`${base} ${vista === 'lista' ? activo : inactivo}`}>
         <ListIcon className="h-4 w-4" />
-        Lista
       </button>
     </div>
   );
