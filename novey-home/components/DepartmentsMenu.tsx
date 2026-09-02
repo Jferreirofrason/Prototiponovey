@@ -149,12 +149,15 @@ function ViewToggle({ vista, onChange }: { vista: Vista; onChange: (v: Vista) =>
  */
 function FeaturedRow({ categories }: { categories: Category[] }) {
   return (
-    <ul className="grid grid-cols-4 gap-x-4 gap-y-5 xl:grid-cols-6">
+    // Wrap natural: columnas fijas de 120 con gaps de 32/24; entran hasta 6
+    // por fila en escritorio y el resto baja de fila. Todo alineado al
+    // inicio: la primera burbuja comparte eje con el título y los bloques.
+    <ul className="flex flex-wrap gap-x-8 gap-y-6">
       {categories.map((cat) => (
-        <li key={cat.name}>
-          <a href={ROUTES.categoria} className="group flex min-h-11 flex-col items-center gap-3 text-center">
+        <li key={cat.name} className="w-[120px]">
+          <a href={ROUTES.categoria} className="group flex min-h-11 w-full flex-col items-start gap-3">
             <CategoryThumb cat={cat} size={72} />
-            <span className="line-clamp-2 text-[13px] leading-snug text-text-ink group-hover:text-novey-blue group-hover:underline">
+            <span className="line-clamp-2 w-full text-left text-[13px] leading-snug text-text-ink group-hover:text-novey-blue group-hover:underline">
               {cat.name}
             </span>
           </a>
@@ -173,9 +176,9 @@ function FeaturedScroll({ categories }: { categories: Category[] }) {
     <ul className="scroll-x -mx-4 flex gap-4 overflow-x-auto px-4 pb-2">
       {categories.map((cat) => (
         <li key={cat.name} className="w-[96px] shrink-0">
-          <a href={ROUTES.categoria} className="group flex min-h-11 flex-col items-center gap-2 text-center">
+          <a href={ROUTES.categoria} className="group flex min-h-11 w-full flex-col items-start gap-2">
             <CategoryThumb cat={cat} size={64} />
-            <span className="line-clamp-2 text-[12px] leading-snug text-text-ink">{cat.name}</span>
+            <span className="line-clamp-2 w-full text-left text-[12px] leading-snug text-text-ink">{cat.name}</span>
           </a>
         </li>
       ))}
